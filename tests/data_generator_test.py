@@ -1,13 +1,21 @@
 from suplearn_clone_detection.data_generator import DataGenerator
+from suplearn_clone_detection.ast_transformer import ASTTransformer
+
 
 from tests.base import TestCase
+
+
+class NoopASTTransformer(ASTTransformer):
+    def transform_ast(self, ast, lang):
+        return ast
 
 
 class DataGeneratorTest(TestCase):
     @classmethod
     def setUpClass(cls):
         cls.generator = DataGenerator(cls.fixture_path("submissions.json"),
-                                      cls.fixture_path("asts.json"))
+                                      cls.fixture_path("asts.json"),
+                                      NoopASTTransformer())
 
     def setUp(self):
         self.generator.reset()

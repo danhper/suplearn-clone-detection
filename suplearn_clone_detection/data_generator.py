@@ -6,12 +6,12 @@ import json
 
 # XXX: loads everything in memory
 class DataGenerator:
-    def __init__(self, submissions_filepath, asts_filepath, names_filepath=None, languages=None):
-        if languages is None:
-            languages = ("python", "java")
-        self.languages = languages
+    def __init__(self, submissions_filepath, asts_filepath, ast_transformer,
+                 names_filepath=None, languages=("python", "java")):
         if names_filepath is None:
             names_filepath = path.splitext(asts_filepath)[0] + ".txt"
+        self.ast_transformer = ast_transformer
+        self.languages = languages
         self._load_names(names_filepath)
         self._load_asts(asts_filepath)
         self._load_submissions(submissions_filepath)
@@ -38,7 +38,7 @@ class DataGenerator:
                 self.submissions.append(submission)
 
     def _group_submissions(self):
-        self.submissions_by_language = {self.languages[0]: [], self.languages[1]: []}
+        self.submissions_by_language = {lang: [] for lang in self.languages}
         self.submissions_by_problem = {}
         for submission in self.submissions:
             key = (submission["contest_id"], submission["problem_id"])
@@ -48,25 +48,39 @@ class DataGenerator:
             language = self.normalize_language(submission["language"])
             self.submissions_by_language[language].append(submission)
 
-    def _get_negative_sample(self, lang1_submission, lang2_submission):
+    def _generate_negative_sample(self, lang1_input, lang2_input):
         if random.random() >= 0.5:
-            lang1_submission = random.choice(self.submissions_by_language[self.languages[0]])
+            submissions = self.submissions_by_language[self.languages[0]]
+            lang1_input = self.get_input(random.choice(submissions))
         else:
-            lang2_submission = random.choice(self.submissions_by_language[self.languages[1]])
-        return (self.get_ast(lang1_submission), self.get_ast(lang2_submission), 0)
+            submissions = self.submissions_by_language[self.languages[1]]
+            lang2_input = self.get_input(random.choice(submissions))
+        return lang1_input, lang2_input
 
     def get_ast(self, submission):
         return self.asts[self.names[submission["file"]]]
+
+    def get_input(self, submission):
+        lang = self.normalize_language(submission["language"])
+        ast = self.get_ast(submission)
+        return self.ast_transformer.transform_ast(ast, lang)
+
+    def generate_input(self, lang1_sub, lang2_sub):
+        lang1_input = self.get_input(lang1_sub)
+        lang2_input = self.get_input(lang2_sub)
+        negative_sample = self._generate_negative_sample(lang1_input, lang2_input)
+        yield ((lang1_input, lang2_input), 1)
+        yield (negative_sample, 0)
 
     def next_batch(self, batch_size):
         inputs = []
         labels = []
         for _ in range(batch_size):
             try:
-                lang1_ast, lang2_ast, label = next(self._data_iterator)
+                (lang1_input, lang2_input), label = next(self._data_iterator)
             except StopIteration:
                 break
-            inputs.append((lang1_ast, lang2_ast))
+            inputs.append((lang1_input, lang2_input))
             labels.append(label)
         return inputs, labels
 
@@ -75,8 +89,7 @@ class DataGenerator:
             lang1_submissions = self.filter_language(submissions, self.languages[0])
             lang2_submissions = self.filter_language(submissions, self.languages[1])
             for (lang1_sub, lang2_sub) in itertools.product(lang1_submissions, lang2_submissions):
-                yield (self.get_ast(lang1_sub), self.get_ast(lang2_sub), 1)
-                yield self._get_negative_sample(lang1_sub, lang2_sub)
+                yield from self.generate_input(lang1_sub, lang2_sub)
 
     def filter_language(self, submissions, language):
         return [s for s in submissions if self.normalize_language(s["language"]) == language]

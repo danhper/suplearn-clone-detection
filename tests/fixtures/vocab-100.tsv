@@ -1,0 +1,101 @@
+id	type	metaType	count	value
+0	SimpleName	Other	1563985
+1	NameExpr	Expr	1215218
+2	MethodCallExpr	Expr	706234
+3	ExpressionStmt	Stmt	547284
+4	ClassOrInterfaceType	Type	528494
+5	BlockStmt	Stmt	293102
+6	VariableDeclarator	Other	230872
+7	VariableDeclarationExpr	Expr	183318
+8	IntegerLiteralExpr	Expr	161283
+9	Parameter	Other	147858
+10	MethodDeclaration	Declaration	142518
+11	StringLiteralExpr	Expr	122115
+12	ObjectCreationExpr	Expr	115276
+13	FieldAccessExpr	Expr	111752
+14	BinaryExpr	Expr	108859
+15	PrimitiveType	Type	93223
+16	ReturnStmt	Stmt	88510
+17	VoidType	Type	69288
+18	IfStmt	Stmt	63610
+19	NullLiteralExpr	Expr	58262
+20	ArrayAccessExpr	Expr	53728
+21	IntegerLiteralExpr	Expr	49226	"0"
+22	AssignExpr	Expr	48675
+23	ArrayType	Type	46292
+24	FieldDeclaration	Declaration	46220
+25	AssignExpr	Expr	44845	"="
+26	DoubleLiteralExpr	Expr	43479
+27	UnaryExpr	Expr	42427
+28	Name	Other	39293
+29	ArrayInitializerExpr	Expr	37296
+30	PrimitiveType	Type	36777	"int"
+31	SimpleName	Other	36589	"assertEquals"
+32	BinaryExpr	Expr	32809	"+"
+33	ThisExpr	Expr	31920
+34	CastExpr	Expr	31502
+35	SimpleName	Other	31343	"String"
+36	SimpleName	Other	30718	"i"
+37	IntegerLiteralExpr	Expr	28650	"1"
+38	EnclosedExpr	Expr	27446
+39	ArrayCreationLevel	Other	27124
+40	ArrayCreationExpr	Expr	25010
+41	PrimitiveType	Type	23158	"double"
+42	UnaryExpr	Expr	21299	"-"
+43	BooleanLiteralExpr	Expr	20445
+44	TryStmt	Stmt	19628
+45	CatchClause	Other	18518
+46	ClassOrInterfaceDeclaration	Declaration	18386
+47	ForStmt	Stmt	17496
+48	ThrowStmt	Stmt	15518
+49	ConstructorDeclaration	Declaration	15088
+50	CompilationUnit	Other	14682
+51	PackageDeclaration	Declaration	14668
+52	BinaryExpr	Expr	14044	"=="
+53	SimpleName	Other	13422	"Assert"
+54	IntegerLiteralExpr	Expr	13183	"2"
+55	SimpleName	Other	13051	"length"
+56	ClassExpr	Expr	12874
+57	SimpleName	Other	12349	"assertTrue"
+58	PrimitiveType	Type	11562	"boolean"
+59	SimpleName	Other	11503	"value"
+60	BooleanLiteralExpr	Expr	11040	"false"
+61	BinaryExpr	Expr	11037	"<"
+62	PrimitiveType	Type	10750	"byte"
+63	SimpleName	Other	10593	"Object"
+64	SimpleName	Other	9862	"e"
+65	UnaryExpr	Expr	9722	"++"
+66	BinaryExpr	Expr	9668	"*"
+67	BooleanLiteralExpr	Expr	9405	"true"
+68	ExplicitConstructorInvocationStmt	Stmt	8928
+69	SimpleName	Other	8571	"Exception"
+70	BinaryExpr	Expr	8292	"!="
+71	BinaryExpr	Expr	7905	"-"
+72	TypeParameter	Other	7858
+73	SimpleName	Other	7781	"result"
+74	SimpleName	Other	7690	"x"
+75	IntegerLiteralExpr	Expr	7452	"3"
+76	SimpleName	Other	7410	"add"
+77	Name	Other	7330	"commons"
+78	Name	Other	7330	"org"
+79	Name	Other	7330	"apache"
+80	SimpleName	Other	7131	"key"
+81	SimpleName	Other	7068	"IOException"
+82	SimpleName	Other	6693	"get"
+83	CharLiteralExpr	Expr	6579
+84	SimpleName	Other	6128	"name"
+85	ForeachStmt	Stmt	6124
+86	SimpleName	Other	6091	"size"
+87	PrimitiveType	Type	6058	"long"
+88	SimpleName	Other	6038	"append"
+89	SimpleName	Other	5688	"j"
+90	UnaryExpr	Expr	5672	"+"
+91	ConditionalExpr	Expr	5666
+92	InstanceOfExpr	Expr	5666
+93	SimpleName	Other	5473	"Integer"
+94	SimpleName	Other	5396	"fail"
+95	SimpleName	Other	5365	"toString"
+96	SimpleName	Other	5080	"T"
+97	SimpleName	Other	4992	"equals"
+98	UnaryExpr	Expr	4991	"!"
+99	IntegerLiteralExpr	Expr	4988	"4"
