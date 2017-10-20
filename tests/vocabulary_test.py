@@ -13,7 +13,7 @@ class VocabularyTest(TestCase):
     def test_valid_access_no_value(self):
         self.assertEqual(self.vocab_no_values[{"type": "SimpleName"}], 0)
         self.assertEqual(self.vocab_no_values[{"type": "BinaryExpr"}], 10)
-        self.assertEqual(self.vocab_no_values[{"type": "DoStmt"}], 65)
+        self.assertEqual(self.vocab_no_values[{"type": "DoStmt"}], 60)
 
     def test_valid_access_with_value(self):
         self.assertEqual(self.vocab_with_values[{"type": "SimpleName"}], 0)
