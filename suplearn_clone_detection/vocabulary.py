@@ -1,31 +1,26 @@
 import csv
-import json
-import pandas as pd
 import numpy as np
 
 
 class Vocabulary:
     def __init__(self, filepath):
-        self.vocabulary = pd.read_csv(filepath, sep="\t", quoting=csv.QUOTE_NONE)
-        self.has_values = "value" in self.vocabulary
-        if self.has_values:
-            self.vocabulary.value = self.vocabulary.value.apply(self._transform_value)
-        self.vocabulary.set_index(self.indexes, inplace=True, verify_integrity=True)
-        self.vocabulary.sort_index(level=self.indexes, inplace=True)
+        self.vocabulary, self.has_values = self._parse_file(filepath)
 
     @staticmethod
-    def _transform_value(value):
-        if isinstance(value, str):
-            return json.loads(value)
-        return value
-
-    @property
-    def indexes(self):
-        if self.has_values:
-            return ["type", "value"]
-        return "type"
+    def _parse_file(filepath):
+        with open(filepath, "r", newline="") as f:
+            reader = csv.DictReader(f, delimiter="\t")
+            has_values = "value" in reader.fieldnames
+            vocabulary = {}
+            for row in reader:
+                key = (row["type"],)
+                if has_values:
+                    key += (row.get("value"),)
+                letter_id = np.int64(int(row["id"]))
+                vocabulary[key] = letter_id
+            return vocabulary, has_values
 
     def __getitem__(self, key):
         if not self.has_values:
-            return self.vocabulary.loc[key["type"]].id
-        return self.vocabulary.loc[key["type"], key.get("value", np.nan)].id
+            return self.vocabulary[(key["type"],)]
+        return self.vocabulary[(key["type"], key.get("value"))]
