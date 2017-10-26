@@ -4,13 +4,18 @@ from os import path
 import json
 
 
+DEFAULT_INPUT_MAX_LENGTH = 200
+
+
 # XXX: loads everything in memory
 class DataGenerator:
     def __init__(self, submissions_filepath, asts_filepath, ast_transformer,
-                 names_filepath=None, languages=("python", "java")):
+                 names_filepath=None, input_max_length=DEFAULT_INPUT_MAX_LENGTH,
+                 languages=("python", "java")):
         if names_filepath is None:
             names_filepath = path.splitext(asts_filepath)[0] + ".txt"
         self.ast_transformer = ast_transformer
+        self.input_max_length = input_max_length
         self.languages = languages
         self._load_names(names_filepath)
         self._load_asts(asts_filepath)
@@ -69,9 +74,7 @@ class DataGenerator:
         ast = self.get_ast(submission)
         return self.ast_transformer.transform_ast(ast, lang)
 
-    def generate_input(self, lang1_sub, lang2_sub):
-        lang1_input = self.get_input(lang1_sub)
-        lang2_input = self.get_input(lang2_sub)
+    def generate_input(self, lang1_input, lang2_input):
         negative_sample = self._generate_negative_sample(lang1_input, lang2_input)
         yield ((lang1_input, lang2_input), 1)
         yield (negative_sample, 0)
@@ -92,7 +95,17 @@ class DataGenerator:
         for submissions in self.submissions_by_problem.values():
             lang1_submissions = self.filter_language(submissions, self.languages[0])
             lang2_submissions = self.filter_language(submissions, self.languages[1])
-            yield (lang1_submissions, lang2_submissions)
+            lang1_inputs = self._map_filter_submissions(lang1_submissions)
+            lang2_inputs = self._map_filter_submissions(lang2_submissions)
+            yield (lang1_inputs, lang2_inputs)
+
+    def _map_filter_submissions(self, submisisons):
+        result = []
+        for submission in submisisons:
+            transformed_input = self.get_input(submission)
+            if not self.input_max_length or len(transformed_input) <= self.input_max_length:
+                result.append(transformed_input)
+        return result
 
     def _count_data(self):
         # NOTE: multiply by 2 to add the negative sample

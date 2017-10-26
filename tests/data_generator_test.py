@@ -15,7 +15,8 @@ class DataGeneratorTest(TestCase):
     def setUpClass(cls):
         cls.generator = DataGenerator(cls.fixture_path("submissions.json"),
                                       cls.fixture_path("asts.json"),
-                                      NoopASTTransformer())
+                                      NoopASTTransformer(),
+                                      input_max_length=None)
 
     def setUp(self):
         self.generator.reset()
@@ -39,6 +40,9 @@ class DataGeneratorTest(TestCase):
         self.assertEqual(len(self.generator.submissions_by_problem[(1, 1)]), 3)
         self.assertEqual(len(self.generator.submissions_by_problem[(1, 0)]), 1)
         self.assertEqual(len(self.generator.submissions_by_problem[(5, 0)]), 1)
+
+    def test_len(self):
+        self.assertEqual(len(self.generator), 4)
 
     def test_next_batch(self):
         inputs, labels = self.generator.next_batch(4)
