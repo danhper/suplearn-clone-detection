@@ -16,7 +16,7 @@ class Vocabulary:
                 key = (row["type"],)
                 if has_values:
                     key += (row.get("value"),)
-                letter_id = np.int64(int(row["id"]))
+                letter_id = np.int32(int(row["id"]))
                 vocabulary[key] = letter_id
             return vocabulary, has_values
 

@@ -15,8 +15,7 @@ class DataGeneratorTest(TestCase):
     def setUpClass(cls):
         cls.generator = DataGenerator(cls.fixture_path("submissions.json"),
                                       cls.fixture_path("asts.json"),
-                                      NoopASTTransformer(),
-                                      input_max_length=None)
+                                      NoopASTTransformer())
 
     def setUp(self):
         self.generator.reset()

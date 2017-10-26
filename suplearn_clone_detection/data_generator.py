@@ -10,12 +10,10 @@ DEFAULT_INPUT_MAX_LENGTH = 200
 # XXX: loads everything in memory
 class DataGenerator:
     def __init__(self, submissions_filepath, asts_filepath, ast_transformer,
-                 names_filepath=None, input_max_length=DEFAULT_INPUT_MAX_LENGTH,
-                 languages=("python", "java")):
+                 names_filepath=None, languages=("python", "java")):
         if names_filepath is None:
             names_filepath = path.splitext(asts_filepath)[0] + ".txt"
         self.ast_transformer = ast_transformer
-        self.input_max_length = input_max_length
         self.languages = languages
         self._load_names(names_filepath)
         self._load_asts(asts_filepath)
@@ -103,7 +101,7 @@ class DataGenerator:
         result = []
         for submission in submisisons:
             transformed_input = self.get_input(submission)
-            if not self.input_max_length or len(transformed_input) <= self.input_max_length:
+            if transformed_input:
                 result.append(transformed_input)
         return result
 

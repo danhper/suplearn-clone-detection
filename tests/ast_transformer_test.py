@@ -12,13 +12,27 @@ class FlatVectorIndexASTTransformerTest(TestCase):
     @classmethod
     def setUpClass(cls):
         cls.vocabulary = Vocabulary(cls.fixture_path("vocab-noid.tsv"))
-        cls.transformer = FlatVectorIndexASTTransformer({"java": cls.vocabulary})
         with open(cls.fixture_path("asts.json"), "r") as f:
             cls.asts = [json.loads(v) for v in f.read().split("\n") if v]
 
-    def test_transform(self):
-        ast = self.asts[0]
-        result = self.transformer.transform_ast(ast, "java")
-        self.assertEqual(len(ast), len(result))
+    def test_simple_transform(self):
+        transformer = FlatVectorIndexASTTransformer({"java": self.vocabulary})
+        result = transformer.transform_ast(self.asts[0], "java")
+        self.assertEqual(len(self.asts[0]), len(result))
         for index in result:
-            self.assertIsInstance(index, np.int64)
+            self.assertIsInstance(index, np.int32)
+
+    def test_transform_with_padding(self):
+        transformer = FlatVectorIndexASTTransformer({"java": self.vocabulary}, input_length=210)
+        padded_result = transformer.transform_ast(self.asts[0], "java") # length: 206
+        self.assertEqual(len(padded_result), 210)
+        too_long_result = transformer.transform_ast(self.asts[2], "java") # length: 215
+        self.assertFalse(too_long_result)
+
+    def test_transform_with_base_index(self):
+        transformer = FlatVectorIndexASTTransformer({"java": self.vocabulary})
+        transformer_with_base_index = FlatVectorIndexASTTransformer({"java": self.vocabulary},
+                                                                    base_index=2)
+        normal_result = transformer.transform_ast(self.asts[0], "java")
+        changed_result = transformer_with_base_index.transform_ast(self.asts[0], "java")
+        self.assertEqual([v + np.int32(2) for v in normal_result], changed_result)
