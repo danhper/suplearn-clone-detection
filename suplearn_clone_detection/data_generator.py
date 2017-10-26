@@ -16,10 +16,14 @@ class DataGenerator:
         self._load_asts(asts_filepath)
         self._load_submissions(submissions_filepath)
         self._group_submissions()
+        self._count = self._count_data()
         self.reset()
 
+    def __len__(self):
+        return self._count
+
     def reset(self):
-        self._data_iterator = self._make_iterator()
+        self._data_iterator = self.make_iterator()
 
     def _load_names(self, names_filepath):
         with open(names_filepath, "r") as f:
@@ -84,10 +88,18 @@ class DataGenerator:
             labels.append(label)
         return inputs, labels
 
-    def _make_iterator(self):
+    def _submission_pairs(self):
         for submissions in self.submissions_by_problem.values():
             lang1_submissions = self.filter_language(submissions, self.languages[0])
             lang2_submissions = self.filter_language(submissions, self.languages[1])
+            yield (lang1_submissions, lang2_submissions)
+
+    def _count_data(self):
+        # NOTE: multiply by 2 to add the negative sample
+        return sum(len(a) * len(b) for (a, b) in self._submission_pairs()) * 2
+
+    def make_iterator(self):
+        for (lang1_submissions, lang2_submissions) in self._submission_pairs():
             for (lang1_sub, lang2_sub) in itertools.product(lang1_submissions, lang2_submissions):
                 yield from self.generate_input(lang1_sub, lang2_sub)
 

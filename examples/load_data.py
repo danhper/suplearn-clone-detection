@@ -21,7 +21,12 @@ def main():
 
     print("loading data...")
     generator = DataGenerator(SUBMISSIONS_PATH, ASTS_PATH, transformer)
+    print(len(generator))
     print("finished loading data")
+
+    it = generator.make_iterator()
+
+    print(len(list(it)))
 
     print("first batch")
     generator.next_batch(128)
