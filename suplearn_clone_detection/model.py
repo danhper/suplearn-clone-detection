@@ -11,9 +11,10 @@ def create_encoder(lang_config):
 
     ast_input = Input(shape=(lang_config.input_length,), dtype="int32")
     x = Embedding(embedding_input_size, lang_config.embeddings_dimension)(ast_input)
-    x = LSTM(lang_config.output_dimension)(x)
+    lstm = LSTM(lang_config.output_dimension)
     if lang_config.bidirectional_encoding:
-        x = Bidirectional(x)
+        lstm = Bidirectional(lstm)
+    x = lstm(x)
     return (ast_input, x)
 
 
