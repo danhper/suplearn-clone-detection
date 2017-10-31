@@ -5,7 +5,6 @@ references:
     transformer_class_name: FlatVectorIndexASTTransformer
     vocabulary_offset: 1
 
-
 model:
   languages:
     - name: java
@@ -25,3 +24,7 @@ generator:
   submissions_path: $HOME/workspaces/research/dataset/atcoder/submissions.json
   asts_path: $HOME/workspaces/research/dataset/atcoder/asts/asts.json
   use_all_combinations: false
+
+trainer:
+  batch_size: 128
+  epochs: 10

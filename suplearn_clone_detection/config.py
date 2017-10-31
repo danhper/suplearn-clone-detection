@@ -14,6 +14,7 @@ class LanguageConfig:
         self.output_dimension = config["output_dimension"]
         self.transformer_class_name = config.get("transformer_class_name",
                                                  "FlatVectorIndexASTTransformer")
+        self.bidirectional_encoding = config.get("bidirectional_encoding", False)
 
     @property
     def vocabulary_size(self):
@@ -44,10 +45,17 @@ class GeneratorConfig:
         self.use_all_combinations = config.get("use_all_combinations", False)
 
 
+class TrainerConfig:
+    def __init__(self, config):
+        self.epochs = config["epochs"]
+        self.batch_size = config.get("batch_size", 128)
+
+
 class Config:
     def __init__(self, config):
         self.model = ModelConfig(config["model"])
         self.generator = GeneratorConfig(config["generator"])
+        self.trainer = TrainerConfig(config["trainer"])
 
     @classmethod
     def from_file(cls, filepath):

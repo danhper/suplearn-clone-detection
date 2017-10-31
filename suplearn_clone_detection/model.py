@@ -5,13 +5,15 @@ from suplearn_clone_detection.config import Config
 
 def create_encoder(lang_config):
     from keras import Input
-    from keras.layers import Embedding, LSTM
+    from keras.layers import Embedding, LSTM, Bidirectional
 
     embedding_input_size = lang_config.vocabulary_size + lang_config.vocabulary_offset
 
     ast_input = Input(shape=(lang_config.input_length,), dtype="int32")
     x = Embedding(embedding_input_size, lang_config.embeddings_dimension)(ast_input)
     x = LSTM(lang_config.output_dimension)(x)
+    if lang_config.bidirectional_encoding:
+        x = Bidirectional(x)
     return (ast_input, x)
 
 

@@ -3,6 +3,8 @@ import itertools
 from os import path
 import json
 
+import numpy as np
+
 
 # XXX: loads everything in memory
 class DataGenerator:
@@ -59,7 +61,9 @@ class DataGenerator:
         else:
             submissions = self.submissions_by_language[self.languages[1]]
             lang2_input = self.get_input(random.choice(submissions))
-        return lang1_input, lang2_input
+        if lang1_input and lang2_input:
+            return lang1_input, lang2_input
+        return False
 
     def get_ast(self, submission):
         return self.asts[self.names[submission["file"]]]
@@ -72,7 +76,8 @@ class DataGenerator:
     def generate_input(self, lang1_input, lang2_input):
         negative_sample = self._generate_negative_sample(lang1_input, lang2_input)
         yield ((lang1_input, lang2_input), 1)
-        yield (negative_sample, 0)
+        if negative_sample:
+            yield (negative_sample, 0)
 
     def next_batch(self, batch_size):
         lang1_inputs = []
@@ -86,7 +91,7 @@ class DataGenerator:
             lang1_inputs.append(lang1_input)
             lang2_inputs.append(lang2_input)
             labels.append([label])
-        return [lang1_inputs, lang2_inputs], labels
+        return [np.array(lang1_inputs), np.array(lang2_inputs)], np.array(labels)
 
     def _submissions_list_pairs(self):
         for submissions in self.submissions_by_problem.values():
