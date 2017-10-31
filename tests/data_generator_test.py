@@ -44,23 +44,24 @@ class DataGeneratorTest(TestCase):
         self.assertEqual(len(self.generator), 4)
 
     def test_next_batch(self):
-        inputs, labels = self.generator.next_batch(4)
-        self.assertEqual(len(inputs), 4)
+        [lang1_inputs, lang2_inputs], labels = self.generator.next_batch(4)
+        self.assertEqual(len(lang1_inputs), 4)
+        self.assertEqual(len(lang2_inputs), 4)
         self.assertEqual(len(labels), 4)
-        for asts in inputs:
-            self.assertEqual(len(asts), 2)
         for label in labels:
             self.assertIn(label, [0, 1])
 
-        inputs, labels = self.generator.next_batch(4)
-        self.assertEqual(len(inputs), 0)
+        [lang1_inputs, lang2_inputs], labels = self.generator.next_batch(4)
+        self.assertEqual(len(lang1_inputs), 0)
+        self.assertEqual(len(lang2_inputs), 0)
         self.assertEqual(len(labels), 0)
 
     def test_reset(self):
-        inputs, _labels = self.generator.next_batch(4)
-        self.assertEqual(len(inputs), 4)
-        inputs, _labels = self.generator.next_batch(4)
-        self.assertEqual(len(inputs), 0)
+        [lang1_inputs, lang2_inputs], _labels = self.generator.next_batch(4)
+        self.assertEqual(len(lang1_inputs), 4)
+        self.assertEqual(len(lang2_inputs), 4)
+        [lang1_inputs, _lang2_inputs], _labels = self.generator.next_batch(4)
+        self.assertEqual(len(lang1_inputs), 0)
         self.generator.reset()
-        inputs, _labels = self.generator.next_batch(4)
-        self.assertEqual(len(inputs), 4)
+        [lang1_inputs, _lang2_inputs], _labels = self.generator.next_batch(4)
+        self.assertEqual(len(lang1_inputs), 4)
