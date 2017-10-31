@@ -29,3 +29,4 @@ generator:
 trainer:
   batch_size: 128
   epochs: 10
+  output: "model.h5"

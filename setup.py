@@ -10,5 +10,6 @@ setup(
         "numpy",
         "keras",
         "pyyaml",
+        "h5py",
     ]
 )

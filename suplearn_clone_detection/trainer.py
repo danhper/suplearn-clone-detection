@@ -24,6 +24,8 @@ class Trainer:
         generator = self._make_batch_generator()
         steps_per_epoch = len(self.data_generator) // self.batch_size
         self.model.fit_generator(generator, steps_per_epoch, epochs=self.config.trainer.epochs)
+        if self.config.trainer.output:
+            self.model.save(self.config.trainer.output)
 
     def _create_transformers(self):
         transformers = {}

@@ -49,6 +49,7 @@ class TrainerConfig:
     def __init__(self, config):
         self.epochs = config["epochs"]
         self.batch_size = config.get("batch_size", 128)
+        self.output = config.get("output")
 
 
 class Config:
