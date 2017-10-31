@@ -2,19 +2,18 @@ import numpy as np
 
 
 class ASTTransformer:
-    def transform_ast(self, ast, lang):
+    def transform_ast(self, ast):
         raise NotImplementedError()
 
 
 class FlatVectorIndexASTTransformer(ASTTransformer):
-    def __init__(self, vocabularies, base_index=0, input_length=None):
-        self.vocabularies = vocabularies
-        self.base_index = np.int32(base_index)
+    def __init__(self, vocabulary, vocabulary_offset=0, input_length=None):
+        self.vocabulary = vocabulary
+        self.vocabulary_offset = np.int32(vocabulary_offset)
         self.input_length = input_length
 
-    def transform_ast(self, ast, lang):
-        vocabulary = self.vocabularies[lang]
-        indexes = [vocabulary[node] + self.base_index for node in ast]
+    def transform_ast(self, ast):
+        indexes = [self.vocabulary[node] + self.vocabulary_offset for node in ast]
         if not self.input_length:
             return indexes
         if len(indexes) > self.input_length:

@@ -5,6 +5,7 @@ import pandas as pd
 from suplearn_clone_detection.vocabulary import Vocabulary
 from suplearn_clone_detection.data_generator import DataGenerator
 from suplearn_clone_detection.ast_transformer import FlatVectorIndexASTTransformer
+from suplearn_clone_detection.config import GeneratorConfig
 
 JAVA_VOCAB_PATH = path.expanduser("~/workspaces/research/results/java/data/no-id.tsv")
 PYTHON_VOCAB_PATH = path.expanduser("~/workspaces/research/results/python/vocabulary/no-id.tsv")
@@ -17,18 +18,18 @@ def main():
     java_vocab = Vocabulary(JAVA_VOCAB_PATH)
     python_vocab = Vocabulary(PYTHON_VOCAB_PATH)
 
-    vocabularies = {"java": java_vocab, "python": python_vocab}
-
-    transformer = FlatVectorIndexASTTransformer(vocabularies)
+    transformers = {"java": FlatVectorIndexASTTransformer(java_vocab),
+                    "python": FlatVectorIndexASTTransformer(python_vocab)}
 
     print("loading data...")
-    generator = DataGenerator(SUBMISSIONS_PATH, ASTS_PATH, transformer, input_max_length=150)
+    config = GeneratorConfig(dict(submissions_path=SUBMISSIONS_PATH, asts_path=ASTS_PATH))
+    generator = DataGenerator(config, transformers)
     print(len(generator))
     print("finished loading data")
 
-    java_submission_lengths = [len(transformer.transform_ast(generator.get_ast(s), "java"))
+    java_submission_lengths = [len(transformers["java"].transform_ast(generator.get_ast(s)))
                                for s in generator.submissions_by_language["java"]]
-    python_submission_lengths = [len(transformer.transform_ast(generator.get_ast(s), "python"))
+    python_submission_lengths = [len(transformers["python"].transform_ast(generator.get_ast(s)))
                                  for s in generator.submissions_by_language["python"]]
 
     java_lengths = pd.Series(data=java_submission_lengths)

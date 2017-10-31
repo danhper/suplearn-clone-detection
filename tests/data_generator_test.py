@@ -1,21 +1,23 @@
 from suplearn_clone_detection.data_generator import DataGenerator
 from suplearn_clone_detection.ast_transformer import ASTTransformer
+from suplearn_clone_detection.config import GeneratorConfig
 
 
 from tests.base import TestCase
 
 
 class NoopASTTransformer(ASTTransformer):
-    def transform_ast(self, ast, lang):
+    def transform_ast(self, ast):
         return ast
 
 
 class DataGeneratorTest(TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.generator = DataGenerator(cls.fixture_path("submissions.json"),
-                                      cls.fixture_path("asts.json"),
-                                      NoopASTTransformer())
+        transformers = {"java": NoopASTTransformer(), "python": NoopASTTransformer()}
+        config = GeneratorConfig(dict(submissions_path=cls.fixture_path("submissions.json"),
+                                      asts_path=cls.fixture_path("asts.json")))
+        cls.generator = DataGenerator(config, transformers)
 
     def setUp(self):
         self.generator.reset()
@@ -49,7 +51,7 @@ class DataGeneratorTest(TestCase):
         self.assertEqual(len(lang2_inputs), 4)
         self.assertEqual(len(labels), 4)
         for label in labels:
-            self.assertIn(label, [0, 1])
+            self.assertIn(label, [[0], [1]])
 
         [lang1_inputs, lang2_inputs], labels = self.generator.next_batch(4)
         self.assertEqual(len(lang1_inputs), 0)

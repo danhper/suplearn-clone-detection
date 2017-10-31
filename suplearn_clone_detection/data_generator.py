@@ -6,17 +6,16 @@ import json
 
 # XXX: loads everything in memory
 class DataGenerator:
-    def __init__(self, submissions_filepath, asts_filepath, ast_transformer,
-                 names_filepath=None, use_all_combinations=False, languages=("python", "java")):
-        if names_filepath is None:
-            names_filepath = path.splitext(asts_filepath)[0] + ".txt"
-        self.ast_transformer = ast_transformer
-        self.languages = languages
-        self._load_names(names_filepath)
-        self._load_asts(asts_filepath)
-        self._load_submissions(submissions_filepath)
+    def __init__(self, config, ast_transformers):
+        if config.filenames_path is None:
+            filenames_path = path.splitext(config.asts_path)[0] + ".txt"
+        self.ast_transformers = ast_transformers
+        self.languages = list(ast_transformers.keys())
+        self._load_names(filenames_path)
+        self._load_asts(config.asts_path)
+        self._load_submissions(config.submissions_path)
         self._group_submissions()
-        self._use_all_combinations = use_all_combinations
+        self._use_all_combinations = config.use_all_combinations
         self._count = self._count_data()
         self.reset()
 
@@ -68,7 +67,7 @@ class DataGenerator:
     def get_input(self, submission):
         lang = self.normalize_language(submission["language"])
         ast = self.get_ast(submission)
-        return self.ast_transformer.transform_ast(ast, lang)
+        return self.ast_transformers[lang].transform_ast(ast)
 
     def generate_input(self, lang1_input, lang2_input):
         negative_sample = self._generate_negative_sample(lang1_input, lang2_input)
@@ -86,10 +85,10 @@ class DataGenerator:
                 break
             lang1_inputs.append(lang1_input)
             lang2_inputs.append(lang2_input)
-            labels.append(label)
+            labels.append([label])
         return [lang1_inputs, lang2_inputs], labels
 
-    def _submission_pairs(self):
+    def _submissions_list_pairs(self):
         for submissions in self.submissions_by_problem.values():
             lang1_submissions = self.filter_language(submissions, self.languages[0])
             lang2_submissions = self.filter_language(submissions, self.languages[1])
@@ -107,10 +106,7 @@ class DataGenerator:
 
     def _count_data(self):
         # NOTE: multiply by 2 to add the negative sample
-        if self._use_all_combinations:
-            return sum(len(a) * len(b) for (a, b) in self._submission_pairs()) * 2
-        else:
-            return sum(self._count_combinations(a, b) for (a, b) in self._submission_pairs()) * 2
+        return sum(self._count_combinations(a, b) for (a, b) in self._submissions_list_pairs()) * 2
 
     def _count_combinations(self, lang1_submissions, lang2_submissions):
         len_lang1 = len(lang1_submissions)
@@ -122,12 +118,12 @@ class DataGenerator:
         return max(len_lang1, len_lang2)
 
     def make_iterator(self):
-        for (lang1_submissions, lang2_submissions) in self._submission_pairs():
-            pairs = self._make_pairs_iterator(lang1_submissions, lang2_submissions)
+        for (lang1_submissions, lang2_submissions) in self._submissions_list_pairs():
+            pairs = self._submissions_pairs(lang1_submissions, lang2_submissions)
             for (lang1_sub, lang2_sub) in pairs:
                 yield from self.generate_input(lang1_sub, lang2_sub)
 
-    def _make_pairs_iterator(self, lang1_submissions, lang2_submissions):
+    def _submissions_pairs(self, lang1_submissions, lang2_submissions):
         if self._use_all_combinations:
             yield from itertools.product(lang1_submissions, lang2_submissions)
         else:

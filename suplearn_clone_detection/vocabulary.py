@@ -20,6 +20,9 @@ class Vocabulary:
                 vocabulary[key] = letter_id
             return vocabulary, has_values
 
+    def __len__(self):
+        return len(self.vocabulary)
+
     def __getitem__(self, key):
         if not self.has_values:
             return self.vocabulary[(key["type"],)]

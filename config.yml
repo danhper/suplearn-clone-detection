@@ -1,0 +1,27 @@
+references:
+  language_defaults: &language_defaults
+    embeddings_dimension: 100
+    output_dimension: 100
+    transformer_class_name: FlatVectorIndexASTTransformer
+    vocabulary_offset: 1
+
+
+model:
+  languages:
+    - name: java
+      <<: *language_defaults
+      vocabulary: $HOME/workspaces/research/results/java/data/no-id.tsv
+      input_length: 200
+    - name: python
+      <<: *language_defaults
+      vocabulary: $HOME/workspaces/research/results/python/vocabulary/no-id.tsv
+      input_length: 150
+
+  dense_layers: [64, 64]
+  optimizer:
+    type: rmsprop
+
+generator:
+  submissions_path: $HOME/workspaces/research/dataset/atcoder/submissions.json
+  asts_path: $HOME/workspaces/research/dataset/atcoder/asts/asts.json
+  use_all_combinations: false

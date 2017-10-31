@@ -8,6 +8,7 @@ setup(
     install_requires=[
         "bigcode-embeddings",
         "numpy",
-        "keras"
+        "keras",
+        "pyyaml",
     ]
 )
