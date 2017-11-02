@@ -3,14 +3,15 @@ import yaml
 from suplearn_clone_detection.config import Config
 from suplearn_clone_detection import ast_transformer
 from suplearn_clone_detection.vocabulary import Vocabulary
-from suplearn_clone_detection.data_generator import DataGenerator
+from suplearn_clone_detection.data_generator import DataGenerator, LoopBatchIterator
 from suplearn_clone_detection.model import create_model
 
 
 class Trainer:
     def __init__(self, config_path):
         with open(config_path) as f:
-            self.config = Config(yaml.load(f))
+            self.raw_config = yaml.load(f)
+            self.config = Config(self.raw_config)
         self.transformers = self._create_transformers()
         self.batch_size = self.config.trainer.batch_size
         self.data_generator = None
@@ -21,9 +22,18 @@ class Trainer:
         self.model = create_model(self.config.model)
 
     def train(self):
-        generator = self._make_batch_generator()
-        steps_per_epoch = len(self.data_generator) // self.batch_size
-        self.model.fit_generator(generator, steps_per_epoch, epochs=self.config.trainer.epochs)
+        training_batch_generator = LoopBatchIterator(
+            self.data_generator.make_iterator(data_type="training"), self.batch_size)
+        dev_batch_generator = LoopBatchIterator(
+            self.data_generator.make_iterator(data_type="dev"), self.batch_size)
+
+        self.model.fit_generator(
+            training_batch_generator,
+            len(training_batch_generator),
+            validation_data=dev_batch_generator,
+            validation_steps=len(dev_batch_generator),
+            epochs=self.config.trainer.epochs)
+
         if self.config.trainer.output:
             self.model.save(self.config.trainer.output)
 
@@ -39,13 +49,8 @@ class Trainer:
             transformers[lang.name] = transformer
         return transformers
 
-    def _make_batch_generator(self):
-        while True:
-            inputs, targets = self.data_generator.next_batch(self.batch_size)
-            if len(targets) < self.batch_size:
-                self.data_generator.reset()
-                continue
-            yield (inputs, targets)
+    def save_results(self):
+        pass
 
 
 def main():

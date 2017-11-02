@@ -6,26 +6,76 @@ import json
 import numpy as np
 
 
+class LoopBatchIterator:
+    def __init__(self, data_iterator, batch_size):
+        self._data_iterator = data_iterator
+        self.batch_size = batch_size
+
+    def __iter__(self):
+        return self
+
+    def __len__(self):
+        return len(self._data_iterator) // self.batch_size
+
+    def __next__(self):
+        while True:
+            inputs, targets = self._data_iterator.next_batch(self.batch_size)
+            if len(targets) < self.batch_size:
+                self._data_iterator.reset()
+                continue
+            return inputs, targets
+
+
+class DataIterator:
+    def __init__(self, config, make_iterator, count):
+        self.config = config
+        self._make_iterator = make_iterator
+        self.reset()
+        self._count = count
+
+    def reset(self):
+        self._data_iterator = self._make_iterator()
+
+    def __len__(self):
+        return self._count
+
+    def next_batch(self, batch_size):
+        lang1_inputs = []
+        lang2_inputs = []
+        labels = []
+        for _ in range(batch_size):
+            try:
+                (lang1_input, lang2_input), label = next(self._data_iterator)
+            except StopIteration:
+                break
+            lang1_inputs.append(lang1_input)
+            lang2_inputs.append(lang2_input)
+            labels.append([label])
+        return [np.array(lang1_inputs), np.array(lang2_inputs)], np.array(labels)
+
+
 # XXX: loads everything in memory
 class DataGenerator:
     def __init__(self, config, ast_transformers):
         if config.filenames_path is None:
             filenames_path = path.splitext(config.asts_path)[0] + ".txt"
+        self.config = config
         self.ast_transformers = ast_transformers
         self.languages = list(ast_transformers.keys())
         self._load_names(filenames_path)
         self._load_asts(config.asts_path)
         self._load_submissions(config.submissions_path)
         self._group_submissions()
-        self._use_all_combinations = config.use_all_combinations
-        self._count = self._count_data()
-        self.reset()
+        self._split_data()
 
-    def __len__(self):
-        return self._count
-
-    def reset(self):
-        self._data_iterator = self.make_iterator()
+    def make_iterator(self, data_type="training"):
+        data = getattr(self, "{0}_data".format(data_type))
+        data_count = self._count_data(data)
+        def make_iterator_func():
+            if data_type == "training" and self.config.shuffle_before_epoch:
+                random.shuffle(data)
+            return self._make_iterator(data)
+        return DataIterator(self.config, make_iterator_func, data_count)
 
     def _load_names(self, names_filepath):
         with open(names_filepath, "r") as f:
@@ -54,6 +104,15 @@ class DataGenerator:
             language = self.normalize_language(submission["language"])
             self.submissions_by_language[language].append(submission)
 
+    def _split_data(self):
+        to_split = list(self.submissions_by_problem.values())
+        training_ratio, dev_ratio, _test_ratio = self.config.split_ratio
+        training_end = int(len(to_split) * training_ratio)
+        dev_end = training_end + int(len(to_split) * dev_ratio)
+        self.training_data = to_split[:training_end]
+        self.dev_data = to_split[training_end:dev_end]
+        self.test_data = to_split[dev_end:]
+
     def _generate_negative_sample(self, lang1_input, lang2_input):
         if random.random() >= 0.5:
             submissions = self.submissions_by_language[self.languages[0]]
@@ -74,27 +133,13 @@ class DataGenerator:
         return self.ast_transformers[lang].transform_ast(ast)
 
     def generate_input(self, lang1_input, lang2_input):
-        negative_sample = self._generate_negative_sample(lang1_input, lang2_input)
         yield ((lang1_input, lang2_input), 1)
+        negative_sample = self._generate_negative_sample(lang1_input, lang2_input)
         if negative_sample:
             yield (negative_sample, 0)
 
-    def next_batch(self, batch_size):
-        lang1_inputs = []
-        lang2_inputs = []
-        labels = []
-        for _ in range(batch_size):
-            try:
-                (lang1_input, lang2_input), label = next(self._data_iterator)
-            except StopIteration:
-                break
-            lang1_inputs.append(lang1_input)
-            lang2_inputs.append(lang2_input)
-            labels.append([label])
-        return [np.array(lang1_inputs), np.array(lang2_inputs)], np.array(labels)
-
-    def _submissions_list_pairs(self):
-        for submissions in self.submissions_by_problem.values():
+    def _submissions_list_pairs(self, data):
+        for submissions in data:
             lang1_submissions = self.filter_language(submissions, self.languages[0])
             lang2_submissions = self.filter_language(submissions, self.languages[1])
             lang1_inputs = self._map_filter_submissions(lang1_submissions)
@@ -109,27 +154,14 @@ class DataGenerator:
                 result.append(transformed_input)
         return result
 
-    def _count_data(self):
-        # NOTE: multiply by 2 to add the negative sample
-        return sum(self._count_combinations(a, b) for (a, b) in self._submissions_list_pairs()) * 2
-
-    def _count_combinations(self, lang1_submissions, lang2_submissions):
-        len_lang1 = len(lang1_submissions)
-        len_lang2 = len(lang2_submissions)
-        if self._use_all_combinations:
-            return len_lang1 * len_lang2
-        if len_lang1 == 0 or len_lang2 == 0:
-            return 0
-        return max(len_lang1, len_lang2)
-
-    def make_iterator(self):
-        for (lang1_submissions, lang2_submissions) in self._submissions_list_pairs():
+    def _make_iterator(self, data):
+        for (lang1_submissions, lang2_submissions) in self._submissions_list_pairs(data):
             pairs = self._submissions_pairs(lang1_submissions, lang2_submissions)
             for (lang1_sub, lang2_sub) in pairs:
                 yield from self.generate_input(lang1_sub, lang2_sub)
 
     def _submissions_pairs(self, lang1_submissions, lang2_submissions):
-        if self._use_all_combinations:
+        if self.config.use_all_combinations:
             yield from itertools.product(lang1_submissions, lang2_submissions)
         else:
             if len(lang1_submissions) < len(lang2_submissions):
@@ -146,3 +178,17 @@ class DataGenerator:
             if language.startswith(known_lang):
                 return known_lang
         raise ValueError("unkown language {0}".format(language))
+
+    def _count_combinations(self, lang1_submissions, lang2_submissions):
+        len_lang1 = len(lang1_submissions)
+        len_lang2 = len(lang2_submissions)
+        if self.config.use_all_combinations:
+            return len_lang1 * len_lang2
+        if len_lang1 == 0 or len_lang2 == 0:
+            return 0
+        return max(len_lang1, len_lang2)
+
+    def _count_data(self, data):
+        pairs = self._submissions_list_pairs(data)
+        # multiply by 2 to add negative sample
+        return sum(self._count_combinations(a, b) for (a, b) in pairs) * 2

@@ -43,6 +43,9 @@ class GeneratorConfig:
         if "filenames_path " in config:
             self.filenames_path = path.expandvars(config["filenames_path"])
         self.use_all_combinations = config.get("use_all_combinations", False)
+        self.shuffle = config.get("shuffle", True)
+        self.shuffle_before_epoch = config.get("shuffle_before_epoch", True)
+        self.split_ratio = config.get("split_ratio", [0.8, 0.1, 0.1])
 
 
 class TrainerConfig:
