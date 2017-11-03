@@ -40,11 +40,12 @@ def main():
     python_lengths.describe()
 
     python_lengths.quantile(0.95)
+    iterator = generator.make_iterator("training")
 
     print("first batch")
-    generator.next_batch(128)
+    iterator.next_batch(128)
     print("second batch")
-    generator.next_batch(128)
+    iterator.next_batch(128)
 
 
 if __name__ == '__main__':
