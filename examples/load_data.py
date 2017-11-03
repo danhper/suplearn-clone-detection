@@ -7,8 +7,8 @@ from suplearn_clone_detection.data_generator import DataGenerator
 from suplearn_clone_detection.ast_transformer import FlatVectorIndexASTTransformer
 from suplearn_clone_detection.config import GeneratorConfig
 
-JAVA_VOCAB_PATH = path.expanduser("~/workspaces/research/results/java/data/no-id.tsv")
-PYTHON_VOCAB_PATH = path.expanduser("~/workspaces/research/results/python/vocabulary/no-id.tsv")
+JAVA_VOCAB_PATH = path.expanduser("~/workspaces/research/results/java/vocabulary/vocab-no-id.tsv")
+PYTHON_VOCAB_PATH = path.expanduser("~/workspaces/research/results/python/vocabulary/vocab-no-id.tsv")
 
 SUBMISSIONS_PATH = path.expanduser("~/workspaces/research/dataset/atcoder/submissions.json")
 ASTS_PATH = path.expanduser("~/workspaces/research/dataset/atcoder/asts/asts.json")
