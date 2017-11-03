@@ -56,7 +56,14 @@ def load_files(files):
     return [np.array(java_files), np.array(python_files)]
 
 
-to_predict = load_files([
+def predict(files):
+    to_predict = load_files(files)
+    predictions = [v[0] for v in model.predict(to_predict)]
+    return list(zip(files, predictions))
+
+
+
+predict([
     ("./tmp/Fact.java", "./tmp/fact.py"),
     ("./tmp/Fibo.java", "./tmp/fibo.py"),
     ("./tmp/Quicksort.java", "./tmp/quicksort.py"),
@@ -77,5 +84,3 @@ to_predict = load_files([
     ("./tmp/KnuthShuffle.java", "./tmp/quicksort.py"),
     ("./tmp/Fibo.java", "./tmp/knuth_shuffle.py"),
 ])
-
-model.predict(to_predict)
