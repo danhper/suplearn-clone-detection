@@ -3,14 +3,25 @@ import numpy as np
 from suplearn_clone_detection.config import Config
 
 
-def create_encoder(lang_config):
-    from keras import Input
-    from keras.layers import Embedding, LSTM, Bidirectional
+def make_embeddings(lang_config):
+    from keras.layers import Embedding
 
     embedding_input_size = lang_config.vocabulary_size + lang_config.vocabulary_offset
+    kwargs = {}
+    if lang_config.embeddings:
+        weights = np.load(lang_config.embeddings)
+        padding = np.zeros((lang_config.vocabulary_offset, lang_config.embeddings_dimension))
+        kwargs["weights"] = np.vstack([padding, weights])
+
+    return Embedding(embedding_input_size, lang_config.embeddings_dimension, **kwargs)
+
+
+def create_encoder(lang_config):
+    from keras import Input
+    from keras.layers import LSTM, Bidirectional
 
     ast_input = Input(shape=(lang_config.input_length,), dtype="int32")
-    x = Embedding(embedding_input_size, lang_config.embeddings_dimension)(ast_input)
+    x = make_embeddings(lang_config)(ast_input)
     lstm = LSTM(lang_config.output_dimension)
     if lang_config.bidirectional_encoding:
         lstm = Bidirectional(lstm)
@@ -39,18 +50,3 @@ def create_model(model_config):
                   loss="binary_crossentropy",
                   metrics=["accuracy"])
     return model
-
-
-def try_model():
-    from keras import backend as K
-
-    config = Config.from_file("config.yml")
-    for lang in config.model.languages:
-        lang.vocabulary_size = 100
-
-    model = create_model(config.model)
-
-    left_input = np.array([[1, 2, 8, 12], [5, 7, 9, 2]])
-    right_input = np.array([[7, 20, 0, 3], [15, 6, 21, 3]])
-    model.train_on_batch([left_input, right_input], np.array([[0], [1]]))
-    K.eval(model([K.variable(left_input), K.variable(right_input)]))

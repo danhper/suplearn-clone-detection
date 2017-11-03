@@ -22,20 +22,27 @@ class Trainer:
         self.model = create_model(self.config.model)
 
     def train(self):
+        from keras.callbacks import ModelCheckpoint, TensorBoard
+
         training_batch_generator = LoopBatchIterator(
             self.data_generator.make_iterator(data_type="training"), self.batch_size)
         dev_batch_generator = LoopBatchIterator(
             self.data_generator.make_iterator(data_type="dev"), self.batch_size)
+
+        callbacks = []
+        if self.config.trainer.output:
+            callbacks.append(ModelCheckpoint(self.config.trainer.output, save_best_only=True))
+
+        if self.config.trainer.tensorboard_logs:
+            callbacks.append(TensorBoard(self.config.trainer.tensorboard_logs))
 
         self.model.fit_generator(
             training_batch_generator,
             len(training_batch_generator),
             validation_data=dev_batch_generator,
             validation_steps=len(dev_batch_generator),
-            epochs=self.config.trainer.epochs)
-
-        if self.config.trainer.output:
-            self.model.save(self.config.trainer.output)
+            epochs=self.config.trainer.epochs,
+            callbacks=callbacks)
 
     def _create_transformers(self):
         transformers = {}
