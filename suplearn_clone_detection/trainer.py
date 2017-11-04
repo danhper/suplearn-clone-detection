@@ -34,7 +34,7 @@ class Trainer:
             callbacks.append(ModelCheckpoint(self.config.trainer.output, save_best_only=True))
 
         if self.config.trainer.tensorboard_logs:
-            callbacks.append(TensorBoard(self.config.trainer.tensorboard_logs))
+            callbacks.append(TensorBoard(self.config.trainer.tensorboard_logs, embeddings_freq=1))
 
         self.model.fit_generator(
             training_batch_generator,
