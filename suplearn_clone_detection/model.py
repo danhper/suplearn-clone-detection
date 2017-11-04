@@ -11,7 +11,7 @@ def make_embeddings(lang_config):
     if lang_config.embeddings:
         weights = np.load(lang_config.embeddings)
         padding = np.zeros((lang_config.vocabulary_offset, lang_config.embeddings_dimension))
-        kwargs["weights"] = np.vstack([padding, weights])
+        kwargs["weights"] = [np.vstack([padding, weights])]
 
     return Embedding(embedding_input_size, lang_config.embeddings_dimension, **kwargs)
 

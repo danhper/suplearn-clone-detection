@@ -8,7 +8,7 @@ class LanguageConfig:
         self.name = config["name"]
         self.vocabulary_path = path.expandvars(config["vocabulary"])
         self._vocabulary_size = None
-        self.embeddings = config.get("embeddings")
+        self.embeddings = path.expandvars(config.get("embeddings", ""))
         self.vocabulary_offset = config.get("vocabulary_offset", 0)
         self.input_length = config.get("input_length")
         self.embeddings_dimension = config["embeddings_dimension"]
@@ -53,8 +53,8 @@ class TrainerConfig:
     def __init__(self, config):
         self.epochs = config["epochs"]
         self.batch_size = config.get("batch_size", 128)
-        self.output = config.get("output")
-        self.tensorboard_logs = config.get("tensorboard_logs")
+        self.output = path.expandvars(config.get("output", ""))
+        self.tensorboard_logs = path.expandvars(config.get("tensorboard_logs", ""))
 
 
 class Config:
