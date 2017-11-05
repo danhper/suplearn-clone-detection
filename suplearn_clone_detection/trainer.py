@@ -1,3 +1,7 @@
+import os
+from os import path
+from datetime import datetime
+
 import yaml
 
 from suplearn_clone_detection.config import Config
@@ -10,16 +14,20 @@ from suplearn_clone_detection.model import create_model
 class Trainer:
     def __init__(self, config_path):
         with open(config_path) as f:
-            self.raw_config = yaml.load(f)
-            self.config = Config(self.raw_config)
+            self.raw_config = f.read()
+            self.config = Config(yaml.load(self.raw_config))
         self.transformers = self._create_transformers()
         self.batch_size = self.config.trainer.batch_size
         self.data_generator = None
         self.model = None
+        self._output_dir = None
 
     def initialize(self):
         self.data_generator = DataGenerator(self.config.generator, self.transformers)
         self.model = create_model(self.config.model)
+        os.makedirs(self.output_dir)
+        with open(path.join(self.output_dir, "config.yml"), "w") as f:
+            f.write(self.raw_config)
 
     def train(self):
         from keras.callbacks import ModelCheckpoint, TensorBoard
@@ -30,13 +38,14 @@ class Trainer:
             self.data_generator.make_iterator(data_type="dev"), self.batch_size)
 
         callbacks = []
-        if self.config.trainer.output:
-            callbacks.append(ModelCheckpoint(self.config.trainer.output, save_best_only=True))
+        model_path = path.join(self.output_dir, "model.h5")
+        callbacks.append(ModelCheckpoint(model_path, save_best_only=True))
 
         if self.config.trainer.tensorboard_logs:
-            metadata = {"embedding_{0}".format(lang.name): lang.vocabulary_path
+            tensorboard_logs_path = path.join(self.output_dir, "tf-logs")
+            metadata = {"embedding_{0}".format(lang.name): lang.vocabulary
                         for lang in self.config.model.languages}
-            callbacks.append(TensorBoard(self.config.trainer.tensorboard_logs,
+            callbacks.append(TensorBoard(tensorboard_logs_path,
                                          embeddings_freq=1,
                                          embeddings_metadata=metadata))
 
@@ -51,7 +60,7 @@ class Trainer:
     def _create_transformers(self):
         transformers = {}
         for lang in self.config.model.languages:
-            vocab = Vocabulary(lang.vocabulary_path)
+            vocab = Vocabulary(lang.vocabulary)
             lang.vocabulary_size = len(vocab)
             transformer_class = getattr(ast_transformer, lang.transformer_class_name)
             transformer = transformer_class(vocab,
@@ -60,17 +69,24 @@ class Trainer:
             transformers[lang.name] = transformer
         return transformers
 
-    def save_results(self):
-        pass
+    @property
+    def output_dir(self):
+        if self._output_dir:
+            return self._output_dir
+        output_dir = datetime.now().strftime("%Y%m%d-%H%M")
+        self._output_dir = path.join(self.config.trainer.output_dir, output_dir)
+        return self._output_dir
 
 
-def main():
-    trainer = Trainer("config.yml")
-    print("initializing trainer...")
+def train(config_path, quiet=False):
+    trainer = Trainer(config_path)
+    if not quiet:
+        print("initializing trainer...")
     trainer.initialize()
-    trainer.model.summary()
+    if not quiet:
+        trainer.model.summary()
     trainer.train()
 
 
 if __name__ == '__main__':
-    main()
+    train("config.yml")

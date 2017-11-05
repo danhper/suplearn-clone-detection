@@ -6,7 +6,7 @@ import yaml
 class LanguageConfig:
     def __init__(self, config):
         self.name = config["name"]
-        self.vocabulary_path = path.expandvars(config["vocabulary"])
+        self.vocabulary = path.expandvars(config["vocabulary"])
         self._vocabulary_size = None
         self.embeddings = path.expandvars(config.get("embeddings", ""))
         self.vocabulary_offset = config.get("vocabulary_offset", 0)
@@ -53,8 +53,8 @@ class TrainerConfig:
     def __init__(self, config):
         self.epochs = config["epochs"]
         self.batch_size = config.get("batch_size", 128)
-        self.output = path.expandvars(config.get("output", ""))
-        self.tensorboard_logs = path.expandvars(config.get("tensorboard_logs", ""))
+        self.output_dir = path.expandvars(config.get("output_dir", ""))
+        self.tensorboard_logs = config.get("tensorboard_logs", True)
 
 
 class Config:
