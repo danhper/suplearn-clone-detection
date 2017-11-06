@@ -6,17 +6,16 @@ import yaml
 
 from suplearn_clone_detection.config import Config
 from suplearn_clone_detection import ast_transformer
-from suplearn_clone_detection.vocabulary import Vocabulary
 from suplearn_clone_detection.data_generator import DataGenerator, LoopBatchIterator
 from suplearn_clone_detection.model import create_model
 
 
 class Trainer:
-    def __init__(self, config_path):
+    def __init__(self, config_path: str):
         with open(config_path) as f:
             self.raw_config = f.read()
             self.config = Config(yaml.load(self.raw_config))
-        self.transformers = self._create_transformers()
+        self.transformers = ast_transformer.create_all(self.config.model.languages)
         self.batch_size = self.config.trainer.batch_size
         self.data_generator = None
         self.model = None
@@ -37,9 +36,9 @@ class Trainer:
         dev_batch_generator = LoopBatchIterator(
             self.data_generator.make_iterator(data_type="dev"), self.batch_size)
 
-        callbacks = []
         model_path = path.join(self.output_dir, "model.h5")
-        callbacks.append(ModelCheckpoint(model_path, save_best_only=True))
+        checkpoint_callback = ModelCheckpoint(model_path, save_best_only=True)
+        callbacks = [checkpoint_callback]
 
         if self.config.trainer.tensorboard_logs:
             tensorboard_logs_path = path.join(self.output_dir, "tf-logs")
@@ -57,18 +56,6 @@ class Trainer:
             epochs=self.config.trainer.epochs,
             callbacks=callbacks)
 
-    def _create_transformers(self):
-        transformers = {}
-        for lang in self.config.model.languages:
-            vocab = Vocabulary(lang.vocabulary)
-            lang.vocabulary_size = len(vocab)
-            transformer_class = getattr(ast_transformer, lang.transformer_class_name)
-            transformer = transformer_class(vocab,
-                                            vocabulary_offset=lang.vocabulary_offset,
-                                            input_length=lang.input_length)
-            transformers[lang.name] = transformer
-        return transformers
-
     @property
     def output_dir(self):
         if self._output_dir:
@@ -78,7 +65,7 @@ class Trainer:
         return self._output_dir
 
 
-def train(config_path, quiet=False):
+def train(config_path: str, quiet: bool = False):
     trainer = Trainer(config_path)
     if not quiet:
         print("initializing trainer...")

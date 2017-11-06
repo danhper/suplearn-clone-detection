@@ -10,5 +10,6 @@ setup(
         "keras",
         "pyyaml",
         "h5py",
+        "scikit-learn",
     ]
 )
