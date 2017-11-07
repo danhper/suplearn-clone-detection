@@ -1,20 +1,45 @@
+import sys
 import argparse
 
-from suplearn_clone_detection import trainer
+from suplearn_clone_detection import commands
 
 
 def create_parser():
     parser = argparse.ArgumentParser()
+
+    parser.add_argument(
+        "-q", "--quiet", help="reduce output", default=False, action="store_true")
 
     subparsers = parser.add_subparsers(dest="command")
 
     train_parser = subparsers.add_parser("train", help="Train the model")
     train_parser.add_argument(
         "-c", "--config", help="config file to train model", default="config.yml")
-    train_parser.add_argument(
-        "-q", "--quiet", help="reduce output", default=False, action="store_true")
+
+    evaluate_parser = subparsers.add_parser("evaluate", help="Evaluate the model")
+    evaluate_parser.add_argument(
+        "-d", "--base-dir", help="base directory for model, config and output")
+    evaluate_parser.add_argument(
+        "--data-type", choices=["dev", "test"], default="dev",
+        help="the type of data on which to evaluate the model")
+    evaluate_parser.add_argument(
+        "-c", "--config", help="config file for the model to evaluate", default="config.yml")
+    evaluate_parser.add_argument(
+        "-m", "--model", help="path to the model to evaluate", default="model.h5")
+    evaluate_parser.add_argument(
+        "-o", "--output", help="file where to save the output")
+    evaluate_parser.add_argument(
+        "-f", "--overwrite", help="overwrite the results output if file exists",
+        default=False, action="store_true")
 
     return parser
+
+
+def run_command(args):
+    if args.command == "train":
+        commands.train(args.config, args.quiet)
+    elif args.command == "evaluate":
+        commands.evaluate(vars(args))
 
 
 def run():
@@ -22,5 +47,8 @@ def run():
     args = parser.parse_args()
     if not args.command:
         parser.error("no command provided")
-    elif args.command == "train":
-        trainer.train(args.config, args.quiet)
+    try:
+        run_command(args)
+    except Exception as e: # pylint: disable=broad-except
+        print("failed: {0}".format(e))
+        sys.exit(1)

@@ -63,17 +63,3 @@ class Trainer:
         output_dir = datetime.now().strftime("%Y%m%d-%H%M")
         self._output_dir = path.join(self.config.trainer.output_dir, output_dir)
         return self._output_dir
-
-
-def train(config_path: str, quiet: bool = False):
-    trainer = Trainer(config_path)
-    if not quiet:
-        print("initializing trainer...")
-    trainer.initialize()
-    if not quiet:
-        trainer.model.summary()
-    trainer.train()
-
-
-if __name__ == '__main__':
-    train("config.yml")

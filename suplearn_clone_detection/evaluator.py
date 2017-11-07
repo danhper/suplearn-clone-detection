@@ -1,4 +1,5 @@
 from typing import Dict
+from os import path
 
 import yaml
 
@@ -19,21 +20,29 @@ class Evaluator:
         self.batch_size = self.config.trainer.batch_size
         self.model = model
 
-    def evaluate(self, data_type: str = "dev", output: str = None) -> Dict[str, float]:
+    def evaluate(self, data_type: str = "dev", output: str = None,
+                 overwrite: bool = False) -> Dict[str, Dict[str, float]]:
         data_iterator = self.data_generator.make_iterator(data_type=data_type)
         inputs, targets = data_iterator.next_batch(len(data_iterator))
         prediction_probs = self.model.predict(inputs)
         predictions = np.round(prediction_probs)
-        results = {
-            "accuracy": accuracy_score(targets, predictions),
-            "precision": precision_score(targets, predictions),
-            "recall": recall_score(targets, predictions),
-            "f1": f1_score(targets, predictions),
-        }
+        results = {data_type: {
+            "accuracy": float(accuracy_score(targets, predictions)),
+            "precision": float(precision_score(targets, predictions)),
+            "recall": float(recall_score(targets, predictions)),
+            "f1": float(f1_score(targets, predictions)),
+        }}
         if output:
-            with open(output, "w") as f:
-                yaml.dump(results, f, default_flow_style=False)
+            if path.exists(output) and not overwrite:
+                print("{0} exists, skipping".format(output))
+            else:
+                with open(output, "w") as f:
+                    yaml.dump(results, f, default_flow_style=False)
         return results
+
+    @staticmethod
+    def output_results(results: Dict[str, Dict[str, float]]):
+        print(yaml.dump(results, default_flow_style=False))
 
     @classmethod
     def from_config(cls, config_path: str, model_path: str) -> 'Evaluator':
@@ -47,18 +56,3 @@ class Evaluator:
     @classmethod
     def from_trainer(cls, trainer: Trainer) -> 'Evaluator':
         return cls(trainer.config, trainer.model, trainer.data_generator)
-
-
-
-if __name__ == '__main__':
-    def main():
-        evaluator = Evaluator.from_config("./tmp/20171105-1817/config.yml",
-                                          "./tmp/20171105-1817/model.h5")
-
-        result = evaluator.evaluate()
-        print(result)
-
-        test_result = evaluator.evaluate("test")
-        print(test_result)
-
-    main()
