@@ -3,6 +3,7 @@ from os import path
 
 from suplearn_clone_detection.evaluator import Evaluator
 from suplearn_clone_detection.trainer import Trainer
+from suplearn_clone_detection.predictor import Predictor
 
 
 def train(config_path: str, quiet: bool = False):
@@ -23,19 +24,10 @@ def train(config_path: str, quiet: bool = False):
 
 
 def evaluate(options: Dict[str, str]):
-    options = options.copy()
+    options = process_options(options)
 
     if options.get("output", "") is None:
         options["output"] = "results-{0}.yml".format(options["data_type"])
-
-    if options.get("base_dir"):
-        for key in ["config", "model", "output"]:
-            if options.get(key):
-                options[key] = path.join(options["base_dir"], options[key])
-
-    for key in ["config", "model"]:
-        if not path.isfile(options[key]):
-            raise ValueError("cannot open {0}".format(options[key]))
 
     evaluator = Evaluator.from_config(options["config"], options["model"])
     results = evaluator.evaluate(data_type=options["data_type"],
@@ -44,3 +36,37 @@ def evaluate(options: Dict[str, str]):
     if not options.get("quiet", False):
         evaluator.output_results(results)
     return results
+
+
+def predict(options: Dict[str, str]):
+    options = process_options(options)
+    with open(options["file"], "r") as f:
+        files = [tuple(path.join(options.get("files_base_dir", ""), filename)
+                       for filename in line.split())
+                 for line in f]
+
+    predictor = Predictor.from_config(options["config"], options["model"])
+    predictor.predict(files)
+
+    if not options.get("quiet", False):
+        print(predictor.formatted_predictions)
+
+    if options.get("output"):
+        with open(options["output"], "w") as f:
+            f.write(predictor.formatted_predictions)
+
+
+def process_options(options: Dict[str, str]):
+    options = options.copy()
+
+    if not options.get("base_dir"):
+        return options
+    for key in ["config", "model", "output"]:
+        if options.get(key):
+            options[key] = path.join(options["base_dir"], options[key])
+
+    for key in ["config", "model"]:
+        if not path.isfile(options[key]):
+            raise ValueError("cannot open {0}".format(options[key]))
+
+    return options

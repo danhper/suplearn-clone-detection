@@ -9,6 +9,8 @@ def create_parser():
 
     parser.add_argument(
         "-q", "--quiet", help="reduce output", default=False, action="store_true")
+    parser.add_argument(
+        "--debug", help="enables debug", default=False, action="store_true")
 
     subparsers = parser.add_subparsers(dest="command")
 
@@ -32,6 +34,20 @@ def create_parser():
         "-f", "--overwrite", help="overwrite the results output if file exists",
         default=False, action="store_true")
 
+
+    predict_parser = subparsers.add_parser("predict", help="Predict files")
+    predict_parser.add_argument("file", help="file containing list of files to predict")
+    predict_parser.add_argument(
+        "-b", "--files-base-dir", help="base directory for files in <file>")
+    predict_parser.add_argument(
+        "-d", "--base-dir", help="base directory for model, config and output")
+    predict_parser.add_argument(
+        "-c", "--config", help="config file for the model to evaluate", default="config.yml")
+    predict_parser.add_argument(
+        "-m", "--model", help="path to the model to evaluate", default="model.h5")
+    predict_parser.add_argument(
+        "-o", "--output", help="file where to save the output")
+
     return parser
 
 
@@ -40,6 +56,8 @@ def run_command(args):
         commands.train(args.config, args.quiet)
     elif args.command == "evaluate":
         commands.evaluate(vars(args))
+    elif args.command == "predict":
+        commands.predict(vars(args))
 
 
 def run():
@@ -47,6 +65,10 @@ def run():
     args = parser.parse_args()
     if not args.command:
         parser.error("no command provided")
+
+    if args.debug:
+        return run_command(args)
+
     try:
         run_command(args)
     except Exception as e: # pylint: disable=broad-except
