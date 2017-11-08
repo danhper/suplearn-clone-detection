@@ -1,6 +1,7 @@
 import os
 from os import path
 from datetime import datetime
+import logging
 
 import yaml
 
@@ -30,6 +31,8 @@ class Trainer:
 
     def train(self):
         from keras.callbacks import ModelCheckpoint, TensorBoard
+
+        logging.info("starting training, outputing to %s", self.output_dir)
 
         training_batch_generator = LoopBatchIterator(
             self.data_generator.make_iterator(data_type="training"), self.batch_size)

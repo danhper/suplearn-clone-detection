@@ -1,5 +1,6 @@
 from typing import Dict
 from os import path
+import logging
 
 import yaml
 
@@ -34,7 +35,7 @@ class Evaluator:
         }}
         if output:
             if path.exists(output) and not overwrite:
-                print("{0} exists, skipping".format(output))
+                logging.warning("{0} exists, skipping".format(output))
             else:
                 with open(output, "w") as f:
                     yaml.dump(results, f, default_flow_style=False)

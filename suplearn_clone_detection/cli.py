@@ -1,5 +1,6 @@
 import sys
 import argparse
+import logging
 
 from suplearn_clone_detection import commands
 
@@ -66,11 +67,15 @@ def run():
     if not args.command:
         parser.error("no command provided")
 
+    log_level = logging.INFO if args.quiet else logging.DEBUG
+    logging.basicConfig(level=log_level,
+                        format="%(asctime)-15s %(levelname)s %(message)s")
+
     if args.debug:
         return run_command(args)
 
     try:
         run_command(args)
     except Exception as e: # pylint: disable=broad-except
-        print("failed: {0}".format(e))
+        logging.error("failed: %s", e)
         sys.exit(1)

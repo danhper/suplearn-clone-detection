@@ -1,5 +1,6 @@
 from typing import Dict
 from os import path
+import logging
 
 from suplearn_clone_detection.evaluator import Evaluator
 from suplearn_clone_detection.trainer import Trainer
@@ -8,8 +9,7 @@ from suplearn_clone_detection.predictor import Predictor
 
 def train(config_path: str, quiet: bool = False):
     trainer = Trainer(config_path)
-    if not quiet:
-        print("initializing trainer...")
+    logging.debug("initializing trainer...")
     trainer.initialize()
     if not quiet:
         trainer.model.summary()
