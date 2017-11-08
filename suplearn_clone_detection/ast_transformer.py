@@ -21,7 +21,7 @@ def create(language):
 
 
 class ASTTransformer:
-    def transform_ast(self, ast):
+    def transform_ast(self, list_ast):
         raise NotImplementedError()
 
 
@@ -31,8 +31,8 @@ class FlatVectorIndexASTTransformer(ASTTransformer):
         self.vocabulary_offset = np.int32(vocabulary_offset)
         self.input_length = input_length
 
-    def transform_ast(self, ast):
-        indexes = [self.vocabulary[node] + self.vocabulary_offset for node in ast]
+    def transform_ast(self, list_ast):
+        indexes = [self.vocabulary[node] + self.vocabulary_offset for node in list_ast]
         if not self.input_length:
             return indexes
         if len(indexes) > self.input_length:
