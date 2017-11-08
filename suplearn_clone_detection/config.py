@@ -47,6 +47,7 @@ class GeneratorConfig:
         self.shuffle = config.get("shuffle", True)
         self.shuffle_before_epoch = config.get("shuffle_before_epoch", True)
         self.split_ratio = config.get("split_ratio", [0.8, 0.1, 0.1])
+        self.negative_samples = config.get("negative_samples", 1)
 
 
 class TrainerConfig:

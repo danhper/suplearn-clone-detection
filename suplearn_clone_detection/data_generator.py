@@ -134,9 +134,10 @@ class DataGenerator:
 
     def generate_input(self, lang1_input, lang2_input):
         yield ((lang1_input, lang2_input), 1)
-        negative_sample = self._generate_negative_sample(lang1_input, lang2_input)
-        if negative_sample:
-            yield (negative_sample, 0)
+        for _ in range(self.config.negative_samples):
+            negative_sample = self._generate_negative_sample(lang1_input, lang2_input)
+            if negative_sample:
+                yield (negative_sample, 0)
 
     def _submissions_list_pairs(self, data):
         for submissions in data:
@@ -190,5 +191,6 @@ class DataGenerator:
 
     def _count_data(self, data):
         pairs = self._submissions_list_pairs(data)
+        positive_count = sum(self._count_combinations(a, b) for (a, b) in pairs)
         # multiply by 2 to add negative sample
-        return sum(self._count_combinations(a, b) for (a, b) in pairs) * 2
+        return positive_count + positive_count * self.config.negative_samples
