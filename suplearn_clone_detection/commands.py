@@ -27,7 +27,8 @@ def evaluate(options: Dict[str, str]):
     options = process_options(options)
 
     if options.get("output", "") is None:
-        options["output"] = "results-{0}.yml".format(options["data_type"])
+        val = "results-{0}.yml".format(options["data_type"])
+        options["output"] = path.join(options.get("base_dir", ""), val)
 
     evaluator = Evaluator.from_config(options["config"], options["model"])
     results = evaluator.evaluate(data_type=options["data_type"],
