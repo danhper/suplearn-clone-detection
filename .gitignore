@@ -106,6 +106,6 @@ venv.bak/
 
 # End of https://www.gitignore.io/api/python
 
-config.yml
+/config.yml
 
 tmp/
