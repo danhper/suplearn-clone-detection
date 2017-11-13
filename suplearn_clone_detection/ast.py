@@ -5,6 +5,12 @@ class Node:
         self.value = value
         self.children = []
 
+    def get(self, key):
+        return getattr(self, key)
+
+    def __getitem__(self, key):
+        return self.get(key)
+
     def dfs(self, reverse=False):
         children = reversed(self.children) if reverse else self.children
         yield self

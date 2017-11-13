@@ -23,7 +23,7 @@ class Vocabulary:
     def __len__(self):
         return len(self.vocabulary)
 
-    def __getitem__(self, key):
+    def __getitem__(self, node):
         if not self.has_values:
-            return self.vocabulary[(key["type"],)]
-        return self.vocabulary[(key["type"], key.get("value"))]
+            return self.vocabulary[(node["type"],)]
+        return self.vocabulary[(node["type"], node.get("value"))]

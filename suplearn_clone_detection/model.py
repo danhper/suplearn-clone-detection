@@ -1,9 +1,16 @@
 import numpy as np
 
 
-def make_embeddings(lang_config):
-    from keras.layers import Embedding
+from keras import optimizers
+from keras.models import Model, Input
+from keras.layers import LSTM, Bidirectional, Embedding, concatenate, Dense
 
+from suplearn_clone_detection import ast_transformer
+from suplearn_clone_detection.config import LanguageConfig, ModelConfig
+from suplearn_clone_detection.layers import SplitInput
+
+
+def make_embeddings(lang_config: LanguageConfig):
     embedding_input_size = lang_config.vocabulary_size + lang_config.vocabulary_offset
     kwargs = {"name": "embedding_{0}".format(lang_config.name)}
     if lang_config.embeddings:
@@ -14,25 +21,31 @@ def make_embeddings(lang_config):
     return Embedding(embedding_input_size, lang_config.embeddings_dimension, **kwargs)
 
 
-def create_encoder(lang_config):
-    from keras import Input
-    from keras.layers import LSTM, Bidirectional
+def create_encoder(lang_config: LanguageConfig):
+    transformer = ast_transformer.create(lang_config)
 
-    ast_input = Input(shape=(lang_config.input_length,),
+    ast_input = Input(shape=(transformer.total_input_length,),
                       dtype="int32", name="input_{0}".format(lang_config.name))
+
     x = make_embeddings(lang_config)(ast_input)
+
     lstm = LSTM(lang_config.output_dimension, name="lstm_{0}".format(lang_config.name))
+
+    if transformer.split_input:
+        lstm = SplitInput(lstm, name="bidfs_lstm_{0}".format(lang_config.name))
+
     if lang_config.bidirectional_encoding:
+        if transformer.split_input:
+            raise ValueError("bidirectional_encoding cannot be used with {0}".format(
+                lang_config.transformer_class_name))
         lstm = Bidirectional(lstm, name="bilstm_{0}".format(lang_config.name))
+
     x = lstm(x)
+
     return ast_input, x
 
 
-def create_model(model_config):
-    from keras.models import Model
-    from keras.layers import concatenate, Dense
-    from keras import optimizers
-
+def create_model(model_config: ModelConfig):
     lang1_config, lang2_config = model_config.languages
     input_lang1, output_lang1 = create_encoder(lang1_config)
     input_lang2, output_lang2 = create_encoder(lang2_config)

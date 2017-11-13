@@ -43,18 +43,18 @@ class AstTest(TestCase):
     def test_dfs(self):
         list_ast = self.asts[0]
         root = ast.from_list(list_ast)
-        bfs_types = [node.type for node in root.dfs()]
+        dfs_types = [node.type for node in root.dfs()]
         expected = [node["type"] for node in list_ast]
-        self.assertEqual(bfs_types, expected)
+        self.assertEqual(dfs_types, expected)
 
     def test_dfs_reverse(self):
         list_ast = self.asts[0]
         root = ast.from_list(list_ast)
-        reversed_bfs_types = [node.type for node in root.dfs(reverse=True)]
+        reversed_dfs_types = [node.type for node in root.dfs(reverse=True)]
         not_expected = [node["type"] for node in list_ast]
-        self.assertNotEqual(reversed_bfs_types, not_expected)
-        self.assertEqual(reversed_bfs_types[1], "ClassOrInterfaceDeclaration")
-        self.assertEqual(reversed_bfs_types[2], "MethodDeclaration")
+        self.assertNotEqual(reversed_dfs_types, not_expected)
+        self.assertEqual(reversed_dfs_types[1], "ClassOrInterfaceDeclaration")
+        self.assertEqual(reversed_dfs_types[2], "MethodDeclaration")
 
     def _load_list_ast(self):
         with open(self.fixture_path("asts.json")) as f:

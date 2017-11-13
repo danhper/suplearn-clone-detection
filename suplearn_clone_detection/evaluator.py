@@ -35,7 +35,7 @@ class Evaluator:
         }}
         if output:
             if path.exists(output) and not overwrite:
-                logging.warning("{0} exists, skipping".format(output))
+                logging.warning("%s exists, skipping", output)
             else:
                 with open(output, "w") as f:
                     yaml.dump(results, f, default_flow_style=False)

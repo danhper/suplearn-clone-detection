@@ -6,7 +6,7 @@ from keras.models import load_model
 import numpy as np
 
 from suplearn_clone_detection.vocabulary import Vocabulary
-from suplearn_clone_detection.ast_transformer import FlatVectorIndexASTTransformer
+from suplearn_clone_detection.ast_transformer import DFSTransformer
 
 
 def memoize(f):
@@ -28,8 +28,8 @@ PYTHON_VOCAB_PATH = path.expanduser("~/workspaces/research/results/python/vocabu
 java_vocab = Vocabulary(JAVA_VOCAB_PATH)
 python_vocab = Vocabulary(PYTHON_VOCAB_PATH)
 
-java_transformer = FlatVectorIndexASTTransformer(java_vocab, 1, 200)
-python_transformer = FlatVectorIndexASTTransformer(python_vocab, 1, 150)
+java_transformer = DFSTransformer(java_vocab, 1, 200)
+python_transformer = DFSTransformer(python_vocab, 1, 150)
 
 
 def get_file_ast(filename):

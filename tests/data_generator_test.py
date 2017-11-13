@@ -7,8 +7,11 @@ from tests.base import TestCase
 
 
 class NoopASTTransformer(ASTTransformer):
-    def transform_ast(self, ast):
-        return ast
+    def __init__(self):
+        super(NoopASTTransformer, self).__init__({})
+
+    def transform_ast(self, list_ast):
+        return list_ast
 
 
 class DataGeneratorTest(TestCase):

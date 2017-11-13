@@ -14,7 +14,7 @@ class LanguageConfig:
         self.embeddings_dimension = config["embeddings_dimension"]
         self.output_dimension = config["output_dimension"]
         self.transformer_class_name = config.get("transformer_class_name",
-                                                 "FlatVectorIndexASTTransformer")
+                                                 "DFSTransformer")
         self.bidirectional_encoding = config.get("bidirectional_encoding", False)
 
     @property

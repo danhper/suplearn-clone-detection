@@ -4,7 +4,7 @@ import pandas as pd
 
 from suplearn_clone_detection.vocabulary import Vocabulary
 from suplearn_clone_detection.data_generator import DataGenerator
-from suplearn_clone_detection.ast_transformer import FlatVectorIndexASTTransformer
+from suplearn_clone_detection.ast_transformer import DFSTransformer
 from suplearn_clone_detection.config import GeneratorConfig
 
 JAVA_VOCAB_PATH = path.expanduser("~/workspaces/research/results/java/vocabulary/vocab-no-id.tsv")
@@ -18,8 +18,8 @@ def main():
     java_vocab = Vocabulary(JAVA_VOCAB_PATH)
     python_vocab = Vocabulary(PYTHON_VOCAB_PATH)
 
-    transformers = {"java": FlatVectorIndexASTTransformer(java_vocab),
-                    "python": FlatVectorIndexASTTransformer(python_vocab)}
+    transformers = {"java": DFSTransformer(java_vocab),
+                    "python": DFSTransformer(python_vocab)}
 
     print("loading data...")
     config = GeneratorConfig(dict(submissions_path=SUBMISSIONS_PATH, asts_path=ASTS_PATH))

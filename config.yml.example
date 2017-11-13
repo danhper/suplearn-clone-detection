@@ -2,7 +2,7 @@ references:
   language_defaults: &language_defaults
     embeddings_dimension: 100
     output_dimension: 100
-    transformer_class_name: FlatVectorIndexASTTransformer
+    transformer_class_name: DFSTransformer
     vocabulary_offset: 1
     bidirectional_encoding: true
 
@@ -30,8 +30,10 @@ generator:
   split_ratio: [0.8, 0.1, 0.1]
   # shuffle: false
   # shuffle_before_epoch: false
+  # negative_samples: 4
 
 trainer:
   batch_size: 128
   epochs: 10
-  output: "model.h5"
+  output_dir: ./tmp
+  tensorboard_logs: True
