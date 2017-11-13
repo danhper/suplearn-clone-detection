@@ -9,7 +9,7 @@ class SplitInput(Wrapper):
     def __init__(self, layer, weights=None, **kwargs):
         super(SplitInput, self).__init__(layer, **kwargs)
         self.forward_layer = copy.copy(layer)
-        self.backward_layer = copy.copy(layer)
+        self.backward_layer = layer.__class__.from_config(layer.get_config())
         self.forward_layer.name = 'forward_' + self.forward_layer.name
         self.backward_layer.name = 'backward_' + self.backward_layer.name
         if weights:
