@@ -26,7 +26,7 @@ class Evaluator:
     def evaluate(self, data_type: str = "dev", output: str = None,
                  overwrite: bool = False) -> Dict[str, Dict[str, float]]:
         data_iterator = self.data_generator.make_iterator(data_type=data_type)
-        inputs, targets = data_iterator.next_batch(len(data_iterator))
+        inputs, targets, _weights = data_iterator.next_batch(len(data_iterator))
         prediction_probs = self.model.predict(inputs)
         predictions = np.round(prediction_probs)
         results = {data_type: {

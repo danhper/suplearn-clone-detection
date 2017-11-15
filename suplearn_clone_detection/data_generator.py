@@ -4,6 +4,7 @@ from os import path
 import json
 
 import numpy as np
+from sklearn.utils.class_weight import compute_sample_weight
 
 
 class LoopBatchIterator:
@@ -19,11 +20,11 @@ class LoopBatchIterator:
 
     def __next__(self):
         while True:
-            inputs, targets = self._data_iterator.next_batch(self.batch_size)
+            inputs, targets, weights = self._data_iterator.next_batch(self.batch_size)
             if len(targets) < self.batch_size:
                 self._data_iterator.reset()
                 continue
-            return inputs, targets
+            return inputs, targets, weights
 
 
 class DataIterator:
@@ -50,8 +51,13 @@ class DataIterator:
                 break
             lang1_inputs.append(lang1_input)
             lang2_inputs.append(lang2_input)
-            labels.append([label])
-        return [np.array(lang1_inputs), np.array(lang2_inputs)], np.array(labels)
+            labels.append(label)
+
+        inputs = [np.array(lang1_inputs), np.array(lang2_inputs)]
+        targets = np.array(labels).reshape((len(labels), 1))
+        weights = compute_sample_weight("balanced", labels)
+
+        return inputs, targets, weights
 
 
 # XXX: loads everything in memory
