@@ -7,12 +7,13 @@ import yaml
 
 from suplearn_clone_detection.config import Config
 from suplearn_clone_detection import ast_transformer
+from suplearn_clone_detection.callbacks import EvaluateModelCallback
 from suplearn_clone_detection.data_generator import DataGenerator, LoopBatchIterator
 from suplearn_clone_detection.model import create_model
 
 
 class Trainer:
-    def __init__(self, config_path: str):
+    def __init__(self, config_path: str, quiet: bool):
         with open(config_path) as f:
             self.raw_config = f.read()
             self.config = Config(yaml.load(self.raw_config))
@@ -21,6 +22,7 @@ class Trainer:
         self.data_generator = None
         self.model = None
         self._output_dir = None
+        self.quiet = quiet
 
     def initialize(self):
         self.data_generator = DataGenerator(self.config.generator, self.transformers)
@@ -41,7 +43,11 @@ class Trainer:
 
         model_path = path.join(self.output_dir, "model.h5")
         checkpoint_callback = ModelCheckpoint(model_path, save_best_only=True)
-        callbacks = [checkpoint_callback]
+
+        eval_output = path.join(self.output_dir, "results-dev-epoch-{epoch}.yml")
+        eval_model_callback = EvaluateModelCallback(
+            self.data_generator, output=eval_output, quiet=self.quiet)
+        callbacks = [checkpoint_callback, eval_model_callback]
 
         if self.config.trainer.tensorboard_logs:
             tensorboard_logs_path = path.join(self.output_dir, "tf-logs")

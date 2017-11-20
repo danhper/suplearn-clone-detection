@@ -9,18 +9,14 @@ import numpy as np
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
 
 from suplearn_clone_detection.layers import SplitInput
-from suplearn_clone_detection.trainer import Trainer
 from suplearn_clone_detection import ast_transformer
 from suplearn_clone_detection.config import Config
 from suplearn_clone_detection.data_generator import DataGenerator
 
 
 class Evaluator:
-    def __init__(self, config: Config, model: 'keras.models.Model', data_generator: DataGenerator):
-        self.config = config
-        self.transformers = ast_transformer.create_all(self.config.model.languages)
+    def __init__(self, model: 'keras.models.Model', data_generator: DataGenerator):
         self.data_generator = data_generator
-        self.batch_size = self.config.trainer.batch_size
         self.model = model
 
     def evaluate(self, data_type: str = "dev", output: str = None,
@@ -53,8 +49,8 @@ class Evaluator:
         transformers = ast_transformer.create_all(config.model.languages)
         data_generator = DataGenerator(config.generator, transformers)
         model = load_model(model_path, custom_objects={"SplitInput": SplitInput})
-        return cls(config, model, data_generator)
+        return cls(model, data_generator)
 
     @classmethod
-    def from_trainer(cls, trainer: Trainer) -> 'Evaluator':
-        return cls(trainer.config, trainer.model, trainer.data_generator)
+    def from_trainer(cls, trainer: 'Trainer') -> 'Evaluator':
+        return cls(trainer.model, trainer.data_generator)

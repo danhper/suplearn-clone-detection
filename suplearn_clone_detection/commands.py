@@ -8,7 +8,7 @@ from suplearn_clone_detection.predictor import Predictor
 
 
 def train(config_path: str, quiet: bool = False):
-    trainer = Trainer(config_path)
+    trainer = Trainer(config_path, quiet)
     logging.debug("initializing trainer...")
     trainer.initialize()
     if not quiet:
