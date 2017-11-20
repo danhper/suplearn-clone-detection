@@ -11,7 +11,7 @@ class EvaluateModelCallback(Callback):
         self.quiet = quiet
 
     def on_epoch_end(self, epoch, logs=None):
-        evaluator = Evaluator(self.data_generator, self.model)
+        evaluator = Evaluator(self.model, self.data_generator)
         output = self.output.format(epoch=epoch) if self.output else None
         results = evaluator.evaluate(data_type="dev", output=output)
         if not self.quiet:

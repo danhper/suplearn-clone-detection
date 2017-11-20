@@ -3,6 +3,8 @@ from os import path
 from datetime import datetime
 import logging
 
+from keras.callbacks import ModelCheckpoint, TensorBoard
+
 import yaml
 
 from suplearn_clone_detection.config import Config
@@ -32,8 +34,6 @@ class Trainer:
             f.write(self.raw_config)
 
     def train(self):
-        from keras.callbacks import ModelCheckpoint, TensorBoard
-
         logging.info("starting training, outputing to %s", self.output_dir)
 
         training_batch_generator = LoopBatchIterator(
