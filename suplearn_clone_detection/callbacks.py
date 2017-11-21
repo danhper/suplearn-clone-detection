@@ -15,4 +15,5 @@ class EvaluateModelCallback(Callback):
         output = self.output.format(epoch=epoch) if self.output else None
         results = evaluator.evaluate(data_type="dev", output=output)
         if not self.quiet:
+            print("\nDev set results")
             evaluator.output_results(results)
