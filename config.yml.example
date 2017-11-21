@@ -31,6 +31,7 @@ generator:
   # shuffle: false
   # shuffle_before_epoch: false
   # negative_samples: 4
+  # negative_sample_distance: 0.2
 
 trainer:
   batch_size: 128

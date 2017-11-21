@@ -38,6 +38,11 @@ class DataGeneratorTest(TestCase):
     def test_group_by_language(self):
         self.assertEqual(len(self.generator.submissions_by_language["java"]), 3)
         self.assertEqual(len(self.generator.submissions_by_language["python"]), 2)
+        get_ast_len = lambda sub: len(self.generator.get_ast(sub))
+        for submisisons in self.generator.submissions_by_language.values():
+            for i in range(1, len(submisisons)):
+                self.assertGreaterEqual(get_ast_len(submisisons[i]),
+                                        get_ast_len(submisisons[i - 1]))
 
     def test_group_by_problem(self):
         self.assertEqual(set([(1, 1), (1, 0), (5, 0)]),

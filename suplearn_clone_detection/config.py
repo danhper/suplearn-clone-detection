@@ -48,6 +48,7 @@ class GeneratorConfig:
         self.shuffle_before_epoch = config.get("shuffle_before_epoch", True)
         self.split_ratio = config.get("split_ratio", [0.8, 0.1, 0.1])
         self.negative_samples = config.get("negative_samples", 1)
+        self.negative_sample_distance = config.get("negative_sample_distance", 0.2)
 
 
 class TrainerConfig:

@@ -7,6 +7,12 @@ import numpy as np
 from sklearn.utils.class_weight import compute_sample_weight
 
 
+class DataInput:
+    def __init__(self, submission, vector):
+        self.submission = submission
+        self.vector = vector
+
+
 class LoopBatchIterator:
     def __init__(self, data_iterator, batch_size):
         self._data_iterator = data_iterator
@@ -49,8 +55,8 @@ class DataIterator:
                 (lang1_input, lang2_input), label = next(self._data_iterator)
             except StopIteration:
                 break
-            lang1_inputs.append(lang1_input)
-            lang2_inputs.append(lang2_input)
+            lang1_inputs.append(lang1_input.vector)
+            lang2_inputs.append(lang2_input.vector)
             labels.append(label)
 
         inputs = [np.array(lang1_inputs), np.array(lang2_inputs)]
@@ -109,6 +115,9 @@ class DataGenerator:
             self.submissions_by_problem[key] = current_value
             language = self.normalize_language(submission["language"])
             self.submissions_by_language[language].append(submission)
+        for submissions in self.submissions_by_language.values():
+            submissions.sort(key=lambda sub: len(self.get_ast(sub)))
+
 
     def _split_data(self):
         to_split = list(self.submissions_by_problem.values())
@@ -119,13 +128,46 @@ class DataGenerator:
         self.dev_data = to_split[training_end:dev_end]
         self.test_data = to_split[dev_end:]
 
+    def _find_ast_index(self, submissions, data_input):
+        left, right = 0, len(submissions) - 1
+        target_length = len(self.get_ast(data_input.submission))
+        while left <= right:
+            middle = (left + right) // 2
+            current_ast_length = len(self.get_ast(submissions[middle]))
+            if current_ast_length == target_length:
+                return middle
+            elif current_ast_length > target_length:
+                right = middle - 1
+            else:
+                left = middle + 1
+        raise ValueError("no ast with length {0} found".format(target_length))
+
+    def _choose_negative_sample(self, submissions, valid_input):
+        sample_distance_ratio = self.config.negative_sample_distance
+        if sample_distance_ratio < 0:
+            return random.choice(submissions)
+        sample_distance = int(len(submissions) * sample_distance_ratio)
+        input_index = self._find_ast_index(submissions, valid_input)
+        sample_index = input_index + random.randint(-sample_distance, sample_distance)
+        if sample_index < 0:
+            sample_index = 0
+        elif sample_index >= len(submissions):
+            sample_index = len(submissions) - 1
+        return submissions[sample_index]
+
+    def _get_random_input(self, lang, valid_input):
+        submissions = self.submissions_by_language[lang]
+        random_submission = self._choose_negative_sample(submissions, valid_input)
+        random_input = self.get_input(random_submission)
+        if random_input:
+            return DataInput(random_submission, random_input)
+        return False
+
     def _generate_negative_sample(self, lang1_input, lang2_input):
         if random.random() >= 0.5:
-            submissions = self.submissions_by_language[self.languages[0]]
-            lang1_input = self.get_input(random.choice(submissions))
+            lang1_input = self._get_random_input(self.languages[0], lang1_input)
         else:
-            submissions = self.submissions_by_language[self.languages[1]]
-            lang2_input = self.get_input(random.choice(submissions))
+            lang2_input = self._get_random_input(self.languages[1], lang2_input)
         if lang1_input and lang2_input:
             return lang1_input, lang2_input
         return False
@@ -136,6 +178,9 @@ class DataGenerator:
     def get_input(self, submission):
         lang = self.normalize_language(submission["language"])
         ast = self.get_ast(submission)
+        return self.transform_ast(ast, lang)
+
+    def transform_ast(self, ast, lang):
         return self.ast_transformers[lang].transform_ast(ast)
 
     def generate_input(self, lang1_input, lang2_input):
@@ -153,12 +198,13 @@ class DataGenerator:
             lang2_inputs = self._map_filter_submissions(lang2_submissions)
             yield (lang1_inputs, lang2_inputs)
 
-    def _map_filter_submissions(self, submisisons):
+    def _map_filter_submissions(self, submissions):
         result = []
-        for submission in submisisons:
+        for submission in submissions:
             transformed_input = self.get_input(submission)
             if transformed_input:
-                result.append(transformed_input)
+                data_input = DataInput(submission, transformed_input)
+                result.append(data_input)
         return result
 
     def _make_iterator(self, data):
@@ -198,5 +244,5 @@ class DataGenerator:
     def _count_data(self, data):
         pairs = self._submissions_list_pairs(data)
         positive_count = sum(self._count_combinations(a, b) for (a, b) in pairs)
-        # multiply by 2 to add negative sample
+        # add negative samples count
         return positive_count + positive_count * self.config.negative_samples
