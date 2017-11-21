@@ -3,11 +3,12 @@ import numpy as np
 
 from keras import optimizers
 from keras.models import Model, Input
-from keras.layers import LSTM, Bidirectional, Embedding, concatenate, Dense
+from keras.layers import LSTM, Bidirectional, Embedding, concatenate, Dense, multiply
+
 
 from suplearn_clone_detection import ast_transformer
 from suplearn_clone_detection.config import LanguageConfig, ModelConfig
-from suplearn_clone_detection.layers import SplitInput
+from suplearn_clone_detection.layers import SplitInput, abs_diff, DenseMulti
 
 
 def make_embeddings(lang_config: LanguageConfig):
@@ -50,7 +51,15 @@ def create_model(model_config: ModelConfig):
     input_lang1, output_lang1 = create_encoder(lang1_config)
     input_lang2, output_lang2 = create_encoder(lang2_config)
 
-    x = concatenate([output_lang1, output_lang2])
+    if model_config.merge_mode == "simple":
+        x = concatenate([output_lang1, output_lang2])
+    elif model_config.merge_mode == "bidistance":
+        hx = multiply([output_lang1, output_lang2])
+        hp = abs_diff([output_lang1, output_lang2])
+        x = DenseMulti(model_config.merge_output_dim)([hx, hp])
+    else:
+        raise ValueError("invalid merge mode")
+
     for layer_size in model_config.dense_layers:
         x = Dense(layer_size, activation="relu")(x)
     main_output = Dense(1, activation="sigmoid", name="main_output")(x)

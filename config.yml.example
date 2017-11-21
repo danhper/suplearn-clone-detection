@@ -20,6 +20,8 @@ model:
       input_length: 150
 
   dense_layers: [64, 64]
+  # merge_mode: bidistance
+  # merge_output_dim: 64
   optimizer:
     type: rmsprop
 

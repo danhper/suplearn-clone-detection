@@ -1,5 +1,8 @@
 import copy
 
+from keras import activations, initializers, regularizers, constraints
+from keras.engine import Layer, InputSpec
+from keras.layers.merge import _Merge
 from keras.layers.wrappers import Wrapper
 from keras.utils.generic_utils import has_arg
 import keras.backend as K
@@ -48,7 +51,7 @@ class SplitInput(Wrapper):
         output = K.concatenate([y, y_rev])
 
         # Properly set learning phase
-        if 0 < self.layer.dropout + self.layer.recurrent_dropout:
+        if self.layer.dropout + self.layer.recurrent_dropout > 0:
             output._uses_learning_phase = True
         return output
 
@@ -97,8 +100,104 @@ class SplitInput(Wrapper):
 
     @property
     def constraints(self):
-        constraints = {}
+        constr = {}
         if hasattr(self.forward_layer, 'constraints'):
-            constraints.update(self.forward_layer.constraints)
-            constraints.update(self.backward_layer.constraints)
-        return constraints
+            constr.update(self.forward_layer.constraints)
+            constr.update(self.backward_layer.constraints)
+        return constr
+
+
+class AbsDiff(_Merge):
+    def _merge_function(self, inputs):
+        if len(inputs) != 2:
+            raise ValueError('`AbsDiff` layer should be called '
+                             'on exactly 2 inputs')
+        if inputs[0]._keras_shape != inputs[1]._keras_shape:
+            raise ValueError('`AbsDiff` layer should be called '
+                             'on inputs of the same shape')
+        return K.abs(inputs[0] - inputs[1])
+
+
+def abs_diff(inputs, **kwargs):
+    return AbsDiff(**kwargs)(inputs)
+
+
+class DenseMulti(Layer):
+    def __init__(self, units,
+                 activation=None,
+                 use_bias=True,
+                 kernel_initializer='glorot_uniform',
+                 bias_initializer='zeros',
+                 kernel_regularizer=None,
+                 bias_regularizer=None,
+                 activity_regularizer=None,
+                 kernel_constraint=None,
+                 bias_constraint=None,
+                 **kwargs):
+        if 'input_shape' not in kwargs and 'input_dim' in kwargs:
+            kwargs['input_shape'] = (kwargs.pop('input_dim'),)
+        super(DenseMulti, self).__init__(**kwargs)
+        self.units = units
+        self.kernels = []
+        self.activation = activations.get(activation)
+        self.use_bias = use_bias
+        self.kernel_initializer = initializers.get(kernel_initializer)
+        self.bias_initializer = initializers.get(bias_initializer)
+        self.kernel_regularizer = regularizers.get(kernel_regularizer)
+        self.bias_regularizer = regularizers.get(bias_regularizer)
+        self.activity_regularizer = regularizers.get(activity_regularizer)
+        self.kernel_constraint = constraints.get(kernel_constraint)
+        self.bias_constraint = constraints.get(bias_constraint)
+        self.input_spec = []
+        self.supports_masking = True
+        self.bias = None
+
+    def build(self, input_shape):
+        if not isinstance(input_shape, list):
+            raise ValueError('`DenseMulti` layer should be called '
+                             'on a list of inputs')
+        assert len(input_shape) >= 2
+
+        for i, shape in enumerate(input_shape):
+            assert len(shape) == 2
+            assert shape[0] == input_shape[0][0]
+
+            input_dim = shape[-1]
+
+            self.kernels.append(self.add_weight(shape=(input_dim, self.units),
+                                                initializer=self.kernel_initializer,
+                                                name='kernel-{0}'.format(i),
+                                                regularizer=self.kernel_regularizer,
+                                                constraint=self.kernel_constraint))
+            self.input_spec.append(InputSpec(min_ndim=2, axes={-1: input_dim}))
+        if self.use_bias:
+            self.bias = self.add_weight(shape=(self.units,),
+                                        initializer=self.bias_initializer,
+                                        name='bias',
+                                        regularizer=self.bias_regularizer,
+                                        constraint=self.bias_constraint)
+        self.built = True
+
+    def call(self, inputs):
+        assert len(inputs) == len(self.kernels)
+
+        output = K.dot(inputs[0], self.kernels[0])
+        for i in range(1, len(inputs)):
+            output += K.dot(inputs[i], self.kernels[i])
+        if self.use_bias:
+            output = K.bias_add(output, self.bias)
+        if self.activation is not None:
+            output = self.activation(output)
+        return output
+
+    def compute_output_shape(self, input_shape):
+        if not isinstance(input_shape, list):
+            raise ValueError('`DenseMulti` layer should be called '
+                             'on a list of inputs')
+        for shape in input_shape:
+            assert len(shape) == 2
+            assert shape[0] == input_shape[0][0]
+        assert input_shape[0][-1]
+        output_shape = list(input_shape[0])
+        output_shape[-1] = self.units
+        return tuple(output_shape)

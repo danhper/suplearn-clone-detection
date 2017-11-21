@@ -15,6 +15,8 @@ from suplearn_clone_detection.model import create_model
 
 
 class Trainer:
+    # pylint: disable=too-many-instance-attributes
+
     def __init__(self, config_path: str, quiet: bool):
         with open(config_path) as f:
             self.raw_config = f.read()

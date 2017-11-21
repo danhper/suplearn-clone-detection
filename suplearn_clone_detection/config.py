@@ -29,11 +29,17 @@ class LanguageConfig:
 
 
 class ModelConfig:
+    KNOWN_MERGE_MODES = ["simple", "bidistance"]
+
     def __init__(self, config):
         self.languages = [LanguageConfig(lang) for lang in config["languages"]]
         self.learning_rate = config.get("learning_rate", 0.01)
         self.dense_layers = config.get("dense_layers", [64, 64])
         self.optimizer = config.get("optimizer", {"type": "sgd"})
+        self.merge_mode = config.get("merge_mode", "simple")
+        self.merge_output_dim = config.get("merge_output_dim", 64)
+        if not self.merge_mode in self.KNOWN_MERGE_MODES:
+            raise ValueError("unknown concat mode: {0}".format(self.merge_mode))
 
 
 class GeneratorConfig:

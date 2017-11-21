@@ -66,8 +66,10 @@ class DataIterator:
         return inputs, targets, weights
 
 
-# XXX: loads everything in memory
+# NOTE: loads all submissions and ASTs in memory
 class DataGenerator:
+    # pylint: disable=too-many-instance-attributes
+
     def __init__(self, config, ast_transformers):
         if config.filenames_path is None:
             filenames_path = path.splitext(config.asts_path)[0] + ".txt"
