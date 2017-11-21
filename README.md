@@ -9,6 +9,10 @@ pip install -r requirements.txt
 python setup.py develop
 ```
 
-## Sample usage
+## Usage
 
-See [`examples/load_data.py`](examples/load_data.py)
+See
+
+```
+./bin/suplearn clone -h
+```
