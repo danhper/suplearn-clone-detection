@@ -46,9 +46,7 @@ class Trainer:
         model_path = path.join(self.output_dir, "model.h5")
         checkpoint_callback = ModelCheckpoint(model_path, save_best_only=True)
 
-        eval_output = path.join(self.output_dir, "results-dev-epoch-{epoch}.yml")
-        eval_model_callback = EvaluateModelCallback(
-            self.data_generator, output=eval_output, quiet=self.quiet)
+        eval_model_callback = EvaluateModelCallback(self.data_generator, quiet=self.quiet)
         callbacks = [checkpoint_callback, eval_model_callback]
 
         if self.config.trainer.tensorboard_logs:
