@@ -201,3 +201,10 @@ class DenseMulti(Layer):
         output_shape = list(input_shape[0])
         output_shape[-1] = self.units
         return tuple(output_shape)
+
+
+custom_objects = {
+    "SplitInput": SplitInput,
+    "AbsDiff": AbsDiff,
+    "DenseMulti": DenseMulti,
+}

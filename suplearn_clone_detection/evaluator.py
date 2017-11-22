@@ -8,7 +8,7 @@ from keras.models import load_model
 import numpy as np
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
 
-from suplearn_clone_detection.layers import SplitInput
+from suplearn_clone_detection.layers import custom_objects
 from suplearn_clone_detection import ast_transformer
 from suplearn_clone_detection.config import Config
 from suplearn_clone_detection.data_generator import DataGenerator
@@ -48,7 +48,7 @@ class Evaluator:
         config = Config.from_file(config_path)
         transformers = ast_transformer.create_all(config.model.languages)
         data_generator = DataGenerator(config.generator, transformers)
-        model = load_model(model_path, custom_objects={"SplitInput": SplitInput})
+        model = load_model(model_path, custom_objects=custom_objects)
         return cls(model, data_generator)
 
     @classmethod

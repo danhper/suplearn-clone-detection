@@ -6,7 +6,7 @@ from typing import Tuple, List
 import numpy as np
 from keras.models import load_model
 
-from suplearn_clone_detection.layers import SplitInput
+from suplearn_clone_detection.layers import custom_objects
 from suplearn_clone_detection import ast_transformer
 from suplearn_clone_detection.config import Config
 
@@ -64,5 +64,5 @@ class Predictor:
     @classmethod
     def from_config(cls, config_path: str, model_path: str) -> 'Predictor':
         config = Config.from_file(config_path)
-        model = load_model(model_path, custom_objects={"SplitInput": SplitInput})
+        model = load_model(model_path, custom_objects=custom_objects)
         return cls(config, model)
