@@ -17,7 +17,7 @@ from suplearn_clone_detection.model import create_model
 class Trainer:
     # pylint: disable=too-many-instance-attributes
 
-    def __init__(self, config_path: str, quiet: bool):
+    def __init__(self, config_path: str, quiet: bool = False):
         with open(config_path) as f:
             self.raw_config = f.read()
             self.config = Config(yaml.load(self.raw_config))
@@ -34,6 +34,9 @@ class Trainer:
         os.makedirs(self.output_dir)
         with open(path.join(self.output_dir, "config.yml"), "w") as f:
             f.write(self.raw_config)
+        for lang in self.config.model.languages:
+            vocab = self.transformers[lang.name].vocabulary
+            vocab.save(self._vocab_path(lang), offset=lang.vocabulary_offset)
 
     def train(self):
         logging.info("starting training, outputing to %s", self.output_dir)
@@ -51,7 +54,8 @@ class Trainer:
 
         if self.config.trainer.tensorboard_logs:
             tensorboard_logs_path = path.join(self.output_dir, "tf-logs")
-            metadata = {"embedding_{0}".format(lang.name): lang.vocabulary
+            vocab_path = lambda lang: path.relpath(self._vocab_path(lang), tensorboard_logs_path)
+            metadata = {"embedding_{0}".format(lang.name): vocab_path(lang)
                         for lang in self.config.model.languages}
             callbacks.append(TensorBoard(tensorboard_logs_path,
                                          embeddings_freq=1,
@@ -64,6 +68,9 @@ class Trainer:
             validation_steps=len(dev_batch_generator),
             epochs=self.config.trainer.epochs,
             callbacks=callbacks)
+
+    def _vocab_path(self, lang):
+        return path.join(self.output_dir, "vocab-{0}.tsv".format(lang.name))
 
     @property
     def output_dir(self):
