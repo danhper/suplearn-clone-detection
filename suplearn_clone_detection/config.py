@@ -12,7 +12,7 @@ class LanguageConfig:
         self.vocabulary_offset = config.get("vocabulary_offset", 0)
         self.input_length = config.get("input_length")
         self.embeddings_dimension = config["embeddings_dimension"]
-        self.output_dimension = config["output_dimension"]
+        self.output_dimensions = config["output_dimensions"]
         self.transformer_class_name = config.get("transformer_class_name",
                                                  "DFSTransformer")
         self.bidirectional_encoding = config.get("bidirectional_encoding", False)

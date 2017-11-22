@@ -1,7 +1,7 @@
 references:
   language_defaults: &language_defaults
     embeddings_dimension: 100
-    output_dimension: 100
+    output_dimensions: [100]
     transformer_class_name: DFSTransformer
     vocabulary_offset: 1
 
