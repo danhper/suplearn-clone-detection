@@ -8,7 +8,8 @@ class VocabularyTest(TestCase):
     @classmethod
     def setUpClass(cls):
         cls.vocab_no_values = Vocabulary(cls.fixture_path("vocab-noid.tsv"))
-        cls.vocab_with_values = Vocabulary(cls.fixture_path("vocab-100.tsv"))
+        cls.vocab_with_values = Vocabulary(cls.fixture_path("vocab-100.tsv"),
+                                           fallback_empty_value=False)
 
     def test_valid_access_no_value(self):
         self.assertEqual(self.vocab_no_values[{"type": "SimpleName"}], 0)

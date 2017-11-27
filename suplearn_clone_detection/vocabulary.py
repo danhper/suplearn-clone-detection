@@ -33,12 +33,12 @@ class Vocabulary:
 
         key = (node["type"], node.get("value"))
         result = self.vocabulary.get(key)
-        if result:
+        if result is not None:
             return result
         elif self.fallback_empty_value:
             return self.vocabulary[(node["type"], None)]
         else:
-            raise ValueError(key)
+            raise KeyError(key)
 
     def save(self, path, offset=0):
         with open(path, "w", newline="") as csvfile:
