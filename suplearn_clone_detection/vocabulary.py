@@ -16,7 +16,8 @@ class Vocabulary:
             self.headers = reader.fieldnames
             self.vocabulary = {}
             for row in reader:
-                row["value"] = json.loads(row.get("value")) if row.get("value") else None
+                if self.has_values:
+                    row["value"] = json.loads(row.get("value")) if row.get("value") else None
                 self.rows.append(row)
                 key = (row["type"],)
                 if self.has_values:
