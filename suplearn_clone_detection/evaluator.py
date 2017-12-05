@@ -1,3 +1,4 @@
+import sys
 from typing import Dict
 from os import path
 import logging
@@ -18,30 +19,34 @@ class Evaluator:
     def __init__(self, model: 'keras.models.Model', data_generator: DataGenerator):
         self.data_generator = data_generator
         self.model = model
+        self._inputs = None
+        self._targets = None
 
     def evaluate(self, data_type: str = "dev", output: str = None,
-                 overwrite: bool = False) -> Dict[str, Dict[str, float]]:
-        data_iterator = self.data_generator.make_iterator(data_type=data_type)
-        inputs, targets, _weights = data_iterator.next_batch(len(data_iterator))
-        prediction_probs = self.model.predict(inputs)
+                 overwrite: bool = False,
+                 reuse_inputs: bool = False) -> Dict[str, Dict[str, float]]:
+        if not reuse_inputs or not self._inputs:
+            data_iterator = self.data_generator.make_iterator(data_type=data_type)
+            self._inputs, self._targets, _weights = data_iterator.next_batch(len(data_iterator))
+        prediction_probs = self.model.predict(self._inputs)
         predictions = np.round(prediction_probs)
-        results = {data_type: {
-            "accuracy": float(accuracy_score(targets, predictions)),
-            "precision": float(precision_score(targets, predictions)),
-            "recall": float(recall_score(targets, predictions)),
-            "f1": float(f1_score(targets, predictions)),
-        }}
+        results = {
+            "accuracy": float(accuracy_score(self._targets, predictions)),
+            "precision": float(precision_score(self._targets, predictions)),
+            "recall": float(recall_score(self._targets, predictions)),
+            "f1": float(f1_score(self._targets, predictions)),
+        }
         if output:
             if path.exists(output) and not overwrite:
                 logging.warning("%s exists, skipping", output)
             else:
                 with open(output, "w") as f:
-                    yaml.dump(results, f, default_flow_style=False)
+                    self.output_results(results, file=f)
         return results
 
     @staticmethod
-    def output_results(results: Dict[str, Dict[str, float]]):
-        print(yaml.dump(results, default_flow_style=False))
+    def output_results(results: Dict[str, Dict[str, float]], file=sys.stdout):
+        print(yaml.dump(results, default_flow_style=False), file=file, end="")
 
     @classmethod
     def from_config(cls, config_path: str, model_path: str) -> 'Evaluator':
