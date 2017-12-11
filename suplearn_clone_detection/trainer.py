@@ -34,9 +34,10 @@ class Trainer:
         os.makedirs(self.output_dir)
         with open(path.join(self.output_dir, "config.yml"), "w") as f:
             f.write(self.raw_config)
-        for lang in self.config.model.languages:
-            vocab = self.transformers[lang.name].vocabulary
-            vocab.save(self._vocab_path(lang), offset=lang.vocabulary_offset)
+        for transformer in self.transformers:
+            vocab = transformer.vocabulary
+            vocab.save(self._vocab_path(transformer.language),
+                       offset=transformer.vocabulary_offset)
 
     def train(self):
         logging.info("starting training, outputing to %s", self.output_dir)
@@ -59,9 +60,10 @@ class Trainer:
         if self.config.trainer.tensorboard_logs:
             tensorboard_logs_path = path.join(self.output_dir, "tf-logs")
             metadata = {}
-            for lang in self.config.model.languages:
-                vocab_path = path.relpath(self._vocab_path(lang), tensorboard_logs_path)
-                metadata["embedding_{0}".format(lang.name)] = vocab_path
+            for lang_config in self.config.model.languages:
+                vocab_path = path.relpath(self._vocab_path(lang_config.name),
+                                          tensorboard_logs_path)
+                metadata["embedding_{0}".format(lang_config.name)] = vocab_path
             model_callbacks.append(TensorBoard(tensorboard_logs_path,
                                                embeddings_freq=1,
                                                embeddings_metadata=metadata))
@@ -75,7 +77,7 @@ class Trainer:
             callbacks=model_callbacks)
 
     def _vocab_path(self, lang):
-        return path.join(self.output_dir, "vocab-{0}.tsv".format(lang.name))
+        return path.join(self.output_dir, "vocab-{0}.tsv".format(lang))
 
     @property
     def output_dir(self):

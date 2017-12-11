@@ -1,16 +1,18 @@
-from typing import Type, Dict
+from typing import Type, List
 import sys
 
 import numpy as np
 
 from suplearn_clone_detection import ast
+from suplearn_clone_detection.config import LanguageConfig
 from suplearn_clone_detection.vocabulary import Vocabulary
 
 thismodule = sys.modules[__name__]
 
 
 class ASTTransformer:
-    def __init__(self, vocabulary, vocabulary_offset=0, input_length=None):
+    def __init__(self, lang, vocabulary, vocabulary_offset=0, input_length=None):
+        self.language = lang
         self.vocabulary = vocabulary
         self.vocabulary_offset = np.int32(vocabulary_offset)
         self.input_length = input_length
@@ -41,8 +43,8 @@ class DFSTransformer(ASTTransformer):
 
 
 class BiDFSTransformer(ASTTransformer):
-    def __init__(self, vocabulary, vocabulary_offset=0, input_length=None):
-        super(BiDFSTransformer, self).__init__(vocabulary, vocabulary_offset, input_length)
+    def __init__(self, lang, vocabulary, vocabulary_offset=0, input_length=None):
+        super(BiDFSTransformer, self).__init__(lang, vocabulary, vocabulary_offset, input_length)
         if self.total_input_length:
             self.total_input_length *= 2
 
@@ -61,18 +63,19 @@ class BiDFSTransformer(ASTTransformer):
         return True
 
 
-def get_class(language) -> Type[ASTTransformer]:
-    return getattr(thismodule, language.transformer_class_name)
+def get_class(language_config: LanguageConfig) -> Type[ASTTransformer]:
+    return getattr(thismodule, language_config.transformer_class_name)
 
 
-def create_all(languages) -> Dict[str, ASTTransformer]:
-    return {lang.name: create(lang) for lang in languages}
+def create_all(languages: List[LanguageConfig]) -> List[ASTTransformer]:
+    return [create(lang) for lang in languages]
 
 
-def create(language) -> ASTTransformer:
-    vocab = Vocabulary(language.vocabulary)
-    language.vocabulary_size = len(vocab)
-    transformer_class = get_class(language)
-    return transformer_class(vocab,
-                             vocabulary_offset=language.vocabulary_offset,
-                             input_length=language.input_length)
+def create(language_config: LanguageConfig) -> ASTTransformer:
+    vocab = Vocabulary(language_config.vocabulary)
+    language_config.vocabulary_size = len(vocab)
+    transformer_class = get_class(language_config)
+    return transformer_class(language_config.name,
+                             vocab,
+                             vocabulary_offset=language_config.vocabulary_offset,
+                             input_length=language_config.input_length)

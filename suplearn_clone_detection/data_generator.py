@@ -74,8 +74,8 @@ class DataGenerator:
         if config.filenames_path is None:
             filenames_path = path.splitext(config.asts_path)[0] + ".txt"
         self.config = config
-        self.ast_transformers = ast_transformers
-        self.languages = list(ast_transformers.keys())
+        self.ast_transformers = {tr.language: tr for tr in  ast_transformers}
+        self.languages = [tr.language for tr in ast_transformers]
         self._load_names(filenames_path)
         self._load_asts(config.asts_path)
         self._load_submissions(config.submissions_path)
@@ -116,7 +116,8 @@ class DataGenerator:
             current_value.append(submission)
             self.submissions_by_problem[key] = current_value
             language = self.normalize_language(submission["language"])
-            self.submissions_by_language[language].append(submission)
+            if language:
+                self.submissions_by_language[language].append(submission)
         for submissions in self.submissions_by_language.values():
             submissions.sort(key=lambda sub: len(self.get_ast(sub)))
 
@@ -179,6 +180,8 @@ class DataGenerator:
 
     def get_input(self, submission):
         lang = self.normalize_language(submission["language"])
+        if not lang:
+            raise ValueError("language {0} not available".format(submission["language"]))
         ast = self.get_ast(submission)
         return self.transform_ast(ast, lang)
 
@@ -223,6 +226,8 @@ class DataGenerator:
                 lang1_submissions = itertools.cycle(lang1_submissions)
             elif len(lang1_submissions) > len(lang2_submissions):
                 lang2_submissions = itertools.cycle(lang2_submissions)
+            elif self.languages[0] == self.languages[1]:
+                lang1_submissions = lang1_submissions[1:]
             yield from zip(lang1_submissions, lang2_submissions)
 
     def filter_language(self, submissions, language):
@@ -232,7 +237,7 @@ class DataGenerator:
         for known_lang in self.languages:
             if language.startswith(known_lang):
                 return known_lang
-        raise ValueError("unkown language {0}".format(language))
+        return None
 
     def _count_combinations(self, lang1_submissions, lang2_submissions):
         len_lang1 = len(lang1_submissions)
@@ -241,7 +246,10 @@ class DataGenerator:
             return len_lang1 * len_lang2
         if len_lang1 == 0 or len_lang2 == 0:
             return 0
-        return max(len_lang1, len_lang2)
+        combinations = max(len_lang1, len_lang2)
+        if self.languages[0] == self.languages[1]:
+            combinations -= 1
+        return combinations
 
     def _count_data(self, data):
         pairs = self._submissions_list_pairs(data)

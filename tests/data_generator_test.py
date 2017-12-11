@@ -7,8 +7,8 @@ from tests.base import TestCase
 
 
 class NoopASTTransformer(ASTTransformer):
-    def __init__(self):
-        super(NoopASTTransformer, self).__init__({})
+    def __init__(self, lang):
+        super(NoopASTTransformer, self).__init__(lang, {})
 
     def transform_ast(self, list_ast):
         return list_ast
@@ -17,7 +17,7 @@ class NoopASTTransformer(ASTTransformer):
 class DataGeneratorTest(TestCase):
     @classmethod
     def setUpClass(cls):
-        transformers = {"java": NoopASTTransformer(), "python": NoopASTTransformer()}
+        transformers = [NoopASTTransformer("java"), NoopASTTransformer("python")]
         config = GeneratorConfig(dict(submissions_path=cls.fixture_path("submissions.json"),
                                       asts_path=cls.fixture_path("asts.json")))
         cls.generator = DataGenerator(config, transformers)
@@ -77,3 +77,15 @@ class DataGeneratorTest(TestCase):
         self.iterator.reset()
         [lang1_inputs, _lang2_inputs], _labels, _weights = self.iterator.next_batch(4)
         self.assertEqual(len(lang1_inputs), 4)
+
+    def test_same_language(self):
+        transformers = [NoopASTTransformer("java"), NoopASTTransformer("java")]
+        config = GeneratorConfig(dict(submissions_path=self.fixture_path("submissions.json"),
+                                      asts_path=self.fixture_path("asts.json")))
+        generator = DataGenerator(config, transformers)
+        iterator = generator.make_iterator()
+        [lang1_inputs, lang2_inputs], _labels, _weights = iterator.next_batch(2)
+        self.assertEqual(len(lang1_inputs), 2)
+        self.assertEqual(len(lang2_inputs), 2)
+        [lang1_inputs, _lang2_inputs], _labels, _weights = iterator.next_batch(2)
+        self.assertEqual(len(lang1_inputs), 0)

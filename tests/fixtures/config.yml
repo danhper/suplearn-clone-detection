@@ -24,6 +24,7 @@ generator:
   submissions_path: $HOME/workspaces/research/dataset/atcoder/submissions.json
   asts_path: $HOME/workspaces/research/dataset/atcoder/asts/asts.json
   use_all_combinations: false
+  negative_samples: 1
 
 trainer:
   batch_size: 128
