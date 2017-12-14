@@ -62,7 +62,7 @@ def process_options(options: Dict[str, str]):
 
     if not options.get("base_dir"):
         return options
-    for key in ["config", "model", "output"]:
+    for key in ["config", "model"]:
         if options.get(key):
             options[key] = path.join(options["base_dir"], options[key])
 

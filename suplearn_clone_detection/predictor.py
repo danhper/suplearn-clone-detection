@@ -15,7 +15,8 @@ class Predictor:
     def __init__(self, config: Config, model: 'keras.models.Model'):
         self.config = config
         self.language_names = [lang.name for lang in self.config.model.languages]
-        self.transformers = ast_transformer.create_all(self.config.model.languages)
+        transformers = ast_transformer.create_all(self.config.model.languages)
+        self.transformers = {t.language: t for t in transformers}
         self.model = model
         self._files_cache = {}
         self._predictions = []
@@ -41,7 +42,7 @@ class Predictor:
     def formatted_predictions(self):
         formatted_predictions = []
         for ((lang1_file, lang2_file), prediction) in self._predictions:
-            formatted = "{0} - {1}: {2}".format(lang1_file, lang2_file, prediction)
+            formatted = "{0},{1},{2}".format(lang1_file, lang2_file, prediction)
             formatted_predictions.append(formatted)
         return "\n".join(formatted_predictions)
 
