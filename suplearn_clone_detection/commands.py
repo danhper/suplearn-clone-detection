@@ -46,7 +46,7 @@ def predict(options: Dict[str, str]):
                        for filename in line.split())
                  for line in f]
 
-    predictor = Predictor.from_config(options["config"], options["model"])
+    predictor = Predictor.from_config(options["config"], options["model"], options)
     predictor.predict(files)
 
     if not options.get("quiet", False):

@@ -1,3 +1,4 @@
+import pickle
 import subprocess
 import json
 from os import path
@@ -5,6 +6,7 @@ from typing import Tuple, List
 
 import numpy as np
 from keras.models import load_model
+from tqdm import tqdm
 
 from suplearn_clone_detection.layers import custom_objects
 from suplearn_clone_detection import ast_transformer
@@ -12,7 +14,9 @@ from suplearn_clone_detection.config import Config
 
 
 class Predictor:
-    def __init__(self, config: Config, model: 'keras.models.Model'):
+    def __init__(self, config: Config, model: 'keras.models.Model', options: dict = None):
+        if options is None:
+            options = {}
         self.config = config
         self.language_names = [lang.name for lang in self.config.model.languages]
         transformers = ast_transformer.create_all(self.config.model.languages)
@@ -20,10 +24,19 @@ class Predictor:
         self.model = model
         self._files_cache = {}
         self._predictions = []
+        self.options = options
+        if self.options.get("files_cache"):
+            with open(self.options["files_cache"], "rb") as f:
+                self._files_cache = pickle.load(f)
 
     def predict(self, files: List[Tuple[str, str]]) -> List[float]:
-        to_predict = self._generate_vectors(files)
-        predictions = [float(v[0]) for v in self.model.predict(to_predict)]
+        batch_size = self.options.get("batch_size", self.config.trainer.batch_size)
+        predictions = []
+        for i in tqdm(range(len(files) // batch_size + 1)):
+            batch_files = files[i * batch_size:(i + 1) * batch_size]
+            to_predict = self._generate_vectors(batch_files)
+            predictions += [float(v[0]) for v in
+                            self.model.predict(to_predict, batch_size=batch_size)]
         self._save_predictions(files, predictions)
         return predictions
 
@@ -47,11 +60,11 @@ class Predictor:
         return "\n".join(formatted_predictions)
 
     def get_file_vector(self, filename, language):
-        if filename in self._files_cache:
-            return self._files_cache[filename]
-        transformer = self.transformers[language]
-        file_ast = self.get_file_ast(filename)
-        return transformer.transform_ast(file_ast)
+        if filename not in self._files_cache:
+            transformer = self.transformers[language]
+            file_ast = self.get_file_ast(filename)
+            self._files_cache[filename] = transformer.transform_ast(file_ast)
+        return self._files_cache[filename]
 
     @staticmethod
     def get_file_ast(filename):
@@ -63,7 +76,7 @@ class Predictor:
         return json.loads(res.stdout)
 
     @classmethod
-    def from_config(cls, config_path: str, model_path: str) -> 'Predictor':
+    def from_config(cls, config_path: str, model_path: str, options: dict) -> 'Predictor':
         config = Config.from_file(config_path)
         model = load_model(model_path, custom_objects=custom_objects)
-        return cls(config, model)
+        return cls(config, model, options)

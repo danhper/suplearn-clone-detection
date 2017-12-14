@@ -11,5 +11,6 @@ setup(
         "pyyaml",
         "h5py",
         "scikit-learn",
+        "tqdm",
     ]
 )

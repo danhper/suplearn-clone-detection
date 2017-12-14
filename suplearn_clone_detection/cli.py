@@ -47,6 +47,10 @@ def create_parser():
     predict_parser.add_argument(
         "-m", "--model", help="path to the model to evaluate", default="model.h5")
     predict_parser.add_argument(
+        "--files-cache", help="file containing cached vectors for files")
+    predict_parser.add_argument(
+        "--batch-size", help="size of a batch", type=int)
+    predict_parser.add_argument(
         "-o", "--output", help="file where to save the output")
 
     return parser
