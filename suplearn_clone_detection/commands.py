@@ -42,8 +42,8 @@ def evaluate(options: Dict[str, str]):
 def predict(options: Dict[str, str]):
     options = process_options(options)
     with open(options["file"], "r") as f:
-        files = [tuple(path.join(options.get("files_base_dir", ""), filename)
-                       for filename in line.split())
+        files_base_dir = options.get("files_base_dir") or ""
+        files = [tuple(path.join(files_base_dir, filename) for filename in line.split())
                  for line in f]
 
     predictor = Predictor.from_config(options["config"], options["model"], options)

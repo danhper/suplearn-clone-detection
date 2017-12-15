@@ -20,7 +20,7 @@ class Predictor:
         if options is None:
             options = {}
         self.config = config
-        self.loader = ASTLoader(config.generator.asts_path, config.generator.filenames_path)
+        self.loader = self._make_ast_loader(config, options)
         self.language_names = [lang.name for lang in self.config.model.languages]
         transformers = ast_transformer.create_all(self.config.model.languages)
         self.transformers = {t.language: t for t in transformers}
@@ -31,6 +31,12 @@ class Predictor:
         if self.options.get("files_cache"):
             with open(self.options["files_cache"], "rb") as f:
                 self._files_cache = pickle.load(f)
+
+    @staticmethod
+    def _make_ast_loader(config: Config, options: dict):
+        asts_path = options.get("asts_path") or config.generator.asts_path
+        filenames_path = options.get("filenames_path") or config.generator.filenames_path
+        return ASTLoader(asts_path, filenames_path)
 
     def predict(self, files: List[Tuple[str, str]]) -> List[float]:
         batch_size = self.options.get("batch_size", self.config.trainer.batch_size)

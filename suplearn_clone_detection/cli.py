@@ -49,6 +49,10 @@ def create_parser():
     predict_parser.add_argument(
         "--files-cache", help="file containing cached vectors for files")
     predict_parser.add_argument(
+        "--asts-path", help="file containing the JSON representation of the ASTs")
+    predict_parser.add_argument(
+        "--filenames-path", help="file containing the filename path of the ASTs")
+    predict_parser.add_argument(
         "--batch-size", help="size of a batch", type=int)
     predict_parser.add_argument(
         "-o", "--output", help="file where to save the output")
