@@ -3,6 +3,7 @@ import itertools
 from os import path
 import json
 
+from suplearn_clone_detection.config import GeneratorConfig
 import numpy as np
 from sklearn.utils.class_weight import compute_sample_weight
 
@@ -34,7 +35,7 @@ class LoopBatchIterator:
 
 
 class DataIterator:
-    def __init__(self, config, make_iterator, count):
+    def __init__(self, config: GeneratorConfig, make_iterator, count):
         self.config = config
         self._make_iterator = make_iterator
         self.reset()
@@ -62,6 +63,8 @@ class DataIterator:
         inputs = [np.array(lang1_inputs), np.array(lang2_inputs)]
         targets = np.array(labels).reshape((len(labels), 1))
         weights = compute_sample_weight("balanced", labels)
+        if self.config.class_weights:
+            weights *= compute_sample_weight(self.config.class_weights, labels)
 
         return inputs, targets, weights
 
