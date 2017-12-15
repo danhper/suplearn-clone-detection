@@ -4,6 +4,8 @@ from os import path
 import json
 
 from suplearn_clone_detection.config import GeneratorConfig
+from suplearn_clone_detection.ast_loader import ASTLoader
+
 import numpy as np
 from sklearn.utils.class_weight import compute_sample_weight
 
@@ -74,13 +76,10 @@ class DataGenerator:
     # pylint: disable=too-many-instance-attributes
 
     def __init__(self, config, ast_transformers):
-        if config.filenames_path is None:
-            filenames_path = path.splitext(config.asts_path)[0] + ".txt"
+        self.ast_loader = ASTLoader(config.asts_path, config.filenames_path)
         self.config = config
         self.ast_transformers = {tr.language: tr for tr in  ast_transformers}
         self.languages = [tr.language for tr in ast_transformers]
-        self._load_names(filenames_path)
-        self._load_asts(config.asts_path)
         self._load_submissions(config.submissions_path)
         self._group_submissions()
         self._split_data()
@@ -94,20 +93,12 @@ class DataGenerator:
             return self._make_iterator(data)
         return DataIterator(self.config, make_iterator_func, data_count)
 
-    def _load_names(self, names_filepath):
-        with open(names_filepath, "r") as f:
-            self.names = {filename.strip(): index for (index, filename) in enumerate(f)}
-
-    def _load_asts(self, asts_filepath):
-        with open(asts_filepath, "r") as f:
-            self.asts = [json.loads(ast) for ast in f]
-
     def _load_submissions(self, submissions_filepath):
         self.submissions = []
         with open(submissions_filepath, "r") as f:
             submissions = json.load(f)
         for submission in submissions:
-            if submission["file"] in self.names:
+            if self.ast_loader.has_file(submission["file"]):
                 self.submissions.append(submission)
 
     def _group_submissions(self):
@@ -179,7 +170,7 @@ class DataGenerator:
         return False
 
     def get_ast(self, submission):
-        return self.asts[self.names[submission["file"]]]
+        return self.ast_loader.get_ast(submission["file"])
 
     def get_input(self, submission):
         lang = self.normalize_language(submission["language"])

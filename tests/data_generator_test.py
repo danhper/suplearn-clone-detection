@@ -29,12 +29,6 @@ class DataGeneratorTest(TestCase):
     def test_load_submissions(self):
         self.assertEqual(len(self.generator.submissions), 5)
 
-    def test_load_names(self):
-        self.assertEqual(len(self.generator.names), 5)
-
-    def test_load_asts(self):
-        self.assertEqual(len(self.generator.asts), 5)
-
     def test_group_by_language(self):
         self.assertEqual(len(self.generator.submissions_by_language["java"]), 3)
         self.assertEqual(len(self.generator.submissions_by_language["python"]), 2)

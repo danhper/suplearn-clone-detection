@@ -1,3 +1,4 @@
+import logging
 import pickle
 import subprocess
 import json
@@ -8,8 +9,9 @@ import numpy as np
 from keras.models import load_model
 from tqdm import tqdm
 
-from suplearn_clone_detection.layers import custom_objects
 from suplearn_clone_detection import ast_transformer
+from suplearn_clone_detection.ast_loader import ASTLoader
+from suplearn_clone_detection.layers import custom_objects
 from suplearn_clone_detection.config import Config
 
 
@@ -18,6 +20,7 @@ class Predictor:
         if options is None:
             options = {}
         self.config = config
+        self.loader = ASTLoader(config.generator.asts_path, config.generator.filenames_path)
         self.language_names = [lang.name for lang in self.config.model.languages]
         transformers = ast_transformer.create_all(self.config.model.languages)
         self.transformers = {t.language: t for t in transformers}
@@ -66,10 +69,12 @@ class Predictor:
             self._files_cache[filename] = transformer.transform_ast(file_ast)
         return self._files_cache[filename]
 
-    @staticmethod
-    def get_file_ast(filename):
+    def get_file_ast(self, filename):
+        if self.loader.has_file(filename):
+            return self.loader.get_ast(filename)
         _, ext = path.splitext(filename)
         executable = "bigcode-astgen-{0}".format(ext[1:])
+        logging.warning("%s AST not found, generating with %s", filename, executable)
         res = subprocess.run([executable, filename], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         if res.returncode != 0:
             raise ValueError("got exit code {0}: {1}".format(res.returncode, res.stderr))
