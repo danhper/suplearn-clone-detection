@@ -1,6 +1,5 @@
 import random
 import itertools
-from os import path
 import json
 
 from suplearn_clone_detection.config import GeneratorConfig
@@ -66,7 +65,8 @@ class DataIterator:
         targets = np.array(labels).reshape((len(labels), 1))
         weights = compute_sample_weight("balanced", labels)
         if self.config.class_weights:
-            weights *= compute_sample_weight(self.config.class_weights, labels)
+            class_weights = {k: self.config.class_weights[k] for k in set(labels)}
+            weights *= compute_sample_weight(class_weights, labels)
 
         return inputs, targets, weights
 
