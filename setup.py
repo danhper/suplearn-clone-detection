@@ -12,5 +12,6 @@ setup(
         "h5py",
         "scikit-learn",
         "tqdm",
+        "matplotlib",
     ]
 )
