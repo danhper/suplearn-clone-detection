@@ -16,7 +16,7 @@ from suplearn_clone_detection.data_generator import DataGenerator
 
 
 class Evaluator:
-    def __init__(self, model: 'keras.models.Model', data_generator: DataGenerator):
+    def __init__(self, model: "keras.models.Model", data_generator: DataGenerator):
         self.data_generator = data_generator
         self.model = model
         self._inputs = None

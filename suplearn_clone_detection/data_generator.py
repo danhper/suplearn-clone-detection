@@ -45,6 +45,9 @@ class DataIterator:
     def reset(self):
         self._data_iterator = self._make_iterator()
 
+    def iterate(self):
+        return self._make_iterator()
+
     def __len__(self):
         return self._count
 
