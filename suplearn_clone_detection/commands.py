@@ -48,7 +48,8 @@ def evaluate(options: Dict[str, str]):
         options["output"] = path.join(options.get("base_dir", ""), val)
 
     evaluator = Evaluator.from_config(options["config"], options["model"])
-    results = evaluator.evaluate(data_type=options["data_type"],
+    results = evaluator.evaluate(data_path=options["data_path"],
+                                 data_type=options["data_type"],
                                  output=options["output"],
                                  overwrite=options.get("overwrite", False))
     if not options.get("quiet", False):

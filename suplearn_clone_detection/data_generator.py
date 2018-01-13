@@ -1,3 +1,4 @@
+from os import path
 import random
 import itertools
 import json
@@ -86,6 +87,28 @@ class DataGenerator:
         self._load_submissions(config.submissions_path)
         self._group_submissions()
         self._split_data()
+
+    def _filename_to_submission(self, filename):
+        _basename, ext = path.splitext(filename)
+        for known_lang in self.languages:
+            if known_lang.startswith(ext[1:]):
+                return {"file": filename, "language": known_lang}
+        raise ValueError("no language found for {0}".format(filename))
+
+    def load_csv_data(self, csv_data: list):
+        lang1_inputs, lang2_inputs, labels = [], [], []
+        for datum in csv_data:
+            x1, x2, y = datum
+            x1, x2 = [self.get_input(self._filename_to_submission(v)) for v in [x1, x2]]
+            if x1 and x2:
+                lang1_inputs.append(x1)
+                lang2_inputs.append(x2)
+                labels.append(int(y))
+
+        inputs = [np.array(lang1_inputs), np.array(lang2_inputs)]
+        targets = np.array(labels).reshape((len(labels), 1))
+
+        return inputs, targets
 
     def make_iterator(self, data_type="training"):
         data = getattr(self, "{0}_data".format(data_type))

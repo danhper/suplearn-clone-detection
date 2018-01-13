@@ -34,6 +34,8 @@ def create_parser():
     evaluate_parser.add_argument(
         "-d", "--base-dir", help="base directory for model, config and output")
     evaluate_parser.add_argument(
+        "--data-path", help="path of the data to use for evaulation (csv file)")
+    evaluate_parser.add_argument(
         "--data-type", choices=["dev", "test"], default="dev",
         help="the type of data on which to evaluate the model")
     evaluate_parser.add_argument(

@@ -1,4 +1,5 @@
 import sys
+import csv
 from typing import Dict
 from os import path
 import logging
@@ -22,12 +23,12 @@ class Evaluator:
         self._inputs = None
         self._targets = None
 
-    def evaluate(self, data_type: str = "dev", output: str = None,
-                 overwrite: bool = False,
-                 reuse_inputs: bool = False) -> Dict[str, Dict[str, float]]:
+    def evaluate(self, data_path: str = None, data_type: str = "dev",
+                 output: str = None, overwrite: bool = False,
+                 reuse_inputs: bool = False) -> Dict[str, float]:
         if not reuse_inputs or not self._inputs:
-            data_iterator = self.data_generator.make_iterator(data_type=data_type)
-            self._inputs, self._targets, _weights = data_iterator.next_batch(len(data_iterator))
+            self._inputs, self._targets = self._load_data(data_path, data_type)
+        logging.info("running predictions with %s samples", len(self._targets))
         prediction_probs = self.model.predict(self._inputs)
         predictions = np.round(prediction_probs)
         results = {
@@ -43,6 +44,17 @@ class Evaluator:
                 with open(output, "w") as f:
                     self.output_results(results, file=f)
         return results
+
+    def _load_data(self, data_path: str, data_type: str):
+        if data_path:
+            logging.info("loading data from %s", data_path)
+            with open(data_path) as f:
+                return self.data_generator.load_csv_data(csv.reader(f))
+        else:
+            logging.info("generating %s data", data_type)
+            data_iterator = self.data_generator.make_iterator(data_type=data_type)
+            inputs, targets, _weights = data_iterator.next_batch(len(data_iterator))
+            return inputs, targets
 
     @staticmethod
     def output_results(results: Dict[str, Dict[str, float]], file=sys.stdout):
