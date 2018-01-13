@@ -7,8 +7,9 @@ from suplearn_clone_detection import ast_transformer
 from suplearn_clone_detection.config import Config
 from suplearn_clone_detection.data_generator import DataGenerator
 from suplearn_clone_detection.evaluator import Evaluator
-from suplearn_clone_detection.trainer import Trainer
 from suplearn_clone_detection.predictor import Predictor
+from suplearn_clone_detection.results_printer import ResultsPrinter
+from suplearn_clone_detection.trainer import Trainer
 
 
 def train(config_path: str, quiet: bool = False):
@@ -89,3 +90,8 @@ def process_options(options: Dict[str, str]):
             raise ValueError("cannot open {0}".format(options[key]))
 
     return options
+
+
+def show_results(filepath: str, metric: str, output: str):
+    printer = ResultsPrinter(filepath)
+    printer.show(metric, output)

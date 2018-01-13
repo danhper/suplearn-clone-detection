@@ -8,7 +8,7 @@ import yaml
 
 from keras.models import load_model
 import numpy as np
-from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
+from sklearn import metrics
 
 from suplearn_clone_detection.layers import custom_objects
 from suplearn_clone_detection import ast_transformer
@@ -25,17 +25,20 @@ class Evaluator:
 
     def evaluate(self, data_path: str = None, data_type: str = "dev",
                  output: str = None, overwrite: bool = False,
-                 reuse_inputs: bool = False) -> Dict[str, float]:
+                 reuse_inputs: bool = False) -> dict:
         if not reuse_inputs or not self._inputs:
             self._inputs, self._targets = self._load_data(data_path, data_type)
         logging.info("running predictions with %s samples", len(self._targets))
         prediction_probs = self.model.predict(self._inputs)
         predictions = np.round(prediction_probs)
+        precisions, recalls, _ = metrics.precision_recall_curve(self._targets, predictions)
         results = {
-            "accuracy": float(accuracy_score(self._targets, predictions)),
-            "precision": float(precision_score(self._targets, predictions)),
-            "recall": float(recall_score(self._targets, predictions)),
-            "f1": float(f1_score(self._targets, predictions)),
+            "accuracy": float(metrics.accuracy_score(self._targets, predictions)),
+            "precision": float(metrics.precision_score(self._targets, predictions)),
+            "recall": float(metrics.recall_score(self._targets, predictions)),
+            "avg_precision": float(metrics.average_precision_score(self._targets, predictions)),
+            "f1": float(metrics.f1_score(self._targets, predictions)),
+            "pr_curve": dict(precision=precisions.tolist(), recall=recalls.tolist())
         }
         if output:
             if path.exists(output) and not overwrite:

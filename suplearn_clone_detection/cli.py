@@ -70,6 +70,13 @@ def create_parser():
     predict_parser.add_argument(
         "-o", "--output", help="file where to save the output")
 
+
+    show_results_parser = subparsers.add_parser("show-results", help="Show formatted results")
+    show_results_parser.add_argument("filepath", help="file containing the results")
+    show_results_parser.add_argument("metric", help="the metric to show")
+    show_results_parser.add_argument("-o", "--output", help="output file to save the result")
+
+
     return parser
 
 
@@ -82,6 +89,8 @@ def run_command(args):
         commands.predict(vars(args))
     elif args.command == "generate-data":
         commands.generate_data(args.config, args.output, args.data_type)
+    elif args.command == "show-results":
+        commands.show_results(args.filepath, args.metric, args.output)
 
 
 def run():
