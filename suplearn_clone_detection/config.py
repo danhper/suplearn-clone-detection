@@ -2,6 +2,10 @@ from os import path
 
 import yaml
 
+TRANSFORMER_MAPPING = {
+    "FlatVectorIndexASTTransformer": "DFSTransformer",
+}
+
 
 class LanguageConfig:
     def __init__(self, config):
@@ -12,9 +16,14 @@ class LanguageConfig:
         self.vocabulary_offset = config.get("vocabulary_offset", 0)
         self.input_length = config.get("input_length")
         self.embeddings_dimension = config["embeddings_dimension"]
-        self.output_dimensions = config["output_dimensions"]
+        if "output_dimension" in config:
+            self.output_dimensions = [config["output_dimension"]]
+        else:
+            self.output_dimensions = config["output_dimensions"]
         self.transformer_class_name = config.get("transformer_class_name",
                                                  "DFSTransformer")
+        if self.transformer_class_name in TRANSFORMER_MAPPING:
+            self.transformer_class_name = TRANSFORMER_MAPPING[self.transformer_class_name]
         self.bidirectional_encoding = config.get("bidirectional_encoding", False)
 
     @property

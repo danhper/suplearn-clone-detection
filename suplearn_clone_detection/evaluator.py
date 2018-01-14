@@ -33,6 +33,8 @@ class Evaluator:
         predictions = np.round(prediction_probs)
         precisions, recalls, _ = metrics.precision_recall_curve(self._targets, predictions)
         results = {
+            "samples_count": len(self._targets),
+            "positive_samples_count": len([self._targets for t in self._targets if t == 1]),
             "accuracy": float(metrics.accuracy_score(self._targets, predictions)),
             "precision": float(metrics.precision_score(self._targets, predictions)),
             "recall": float(metrics.recall_score(self._targets, predictions)),
