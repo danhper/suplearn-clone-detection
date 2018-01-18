@@ -68,8 +68,9 @@ def create_parser():
     predict_parser.add_argument(
         "--batch-size", help="size of a batch", type=int)
     predict_parser.add_argument(
+        "--max-size-diff", help="max size diff as a ratio between clones", type=float)
+    predict_parser.add_argument(
         "-o", "--output", help="file where to save the output")
-
 
     show_results_parser = subparsers.add_parser("show-results", help="Show formatted results")
     show_results_parser.add_argument("filepath", help="file containing the results")
