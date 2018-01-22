@@ -1,10 +1,12 @@
+from typing import Union
 from os import path
 import random
 import itertools
 import json
 
-from suplearn_clone_detection.config import GeneratorConfig
+from suplearn_clone_detection.config import GeneratorConfig, Config
 from suplearn_clone_detection.ast_loader import ASTLoader
+from suplearn_clone_detection import ast_transformer
 
 import numpy as np
 from sklearn.utils.class_weight import compute_sample_weight
@@ -276,3 +278,10 @@ class DataGenerator:
         positive_count = sum(self._count_combinations(a, b) for (a, b) in pairs)
         # add negative samples count
         return positive_count + positive_count * self.config.negative_samples
+
+    @classmethod
+    def from_config(cls, config: Union[Config, str]) -> "DataGenerator":
+        if isinstance(config, str):
+            config = Config.from_file(config)
+        transformers = ast_transformer.create_all(config.model.languages)
+        return cls(config.generator, transformers)
