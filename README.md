@@ -9,10 +9,28 @@ pip install -r requirements.txt
 python setup.py develop
 ```
 
+## Configuration
+
+See [config.yml.example](./config.yml.example) for a sample configuration file.
+The file should be copied as `config.yml` to be used automatically.
+
 ## Usage
 
-See
-
 ```
-./bin/suplearn clone -h
+$ ./bin/suplearn-clone -h
+usage: suplearn-clone [-h] [-q] [--debug]
+                      {train,generate-data,evaluate,predict,show-results} ...
+
+positional arguments:
+  {train,generate-data,evaluate,predict,show-results}
+    train               Train the model
+    generate-data       Generate data for evaluating model
+    evaluate            Evaluate the model
+    predict             Predict files
+    show-results        Show formatted results
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -q, --quiet           reduce output
+  --debug               enables debug
 ```
