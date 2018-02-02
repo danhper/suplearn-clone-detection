@@ -25,6 +25,7 @@ class LanguageConfig:
         if self.transformer_class_name in TRANSFORMER_MAPPING:
             self.transformer_class_name = TRANSFORMER_MAPPING[self.transformer_class_name]
         self.bidirectional_encoding = config.get("bidirectional_encoding", False)
+        self.hash_dim = config.get("hash_dim")
 
     @property
     def vocabulary_size(self):

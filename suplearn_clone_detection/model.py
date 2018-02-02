@@ -64,13 +64,19 @@ def create_encoder(lang_config: LanguageConfig, index: int):
                     position=len(lang_config.output_dimensions),
                     return_sequences=False)(x)
 
-    return ast_input, x
+    if lang_config.hash_dim:
+        x = Dense(lang_config.hash_dim, use_bias=False)(x)
+
+    encoder = Model(inputs=ast_input, outputs=x)
+    return ast_input, encoder
 
 
 def create_model(model_config: ModelConfig):
     lang1_config, lang2_config = model_config.languages
-    input_lang1, output_lang1 = create_encoder(lang1_config, 1)
-    input_lang2, output_lang2 = create_encoder(lang2_config, 2)
+    input_lang1, encoder_lang1 = create_encoder(lang1_config, 1)
+    input_lang2, encoder_lang2 = create_encoder(lang2_config, 2)
+    output_lang1 = encoder_lang1(input_lang1)
+    output_lang2 = encoder_lang2(input_lang2)
 
     if model_config.merge_mode == "simple":
         x = concatenate([output_lang1, output_lang2])
