@@ -14,10 +14,11 @@ class SkipgramGenerator:
              gzip.open(output, "wb") as output_file:
             for row in token_files:
                 tokens = json.loads(row)
-                for target, context in self.generate_context_pairs(tokens, window_size):
-                    print("{0},{1}".format(target, context), file=output_file)
+                for target, context in self._generate_context_pairs(tokens, window_size):
+                    output_file.write("{0},{1}".format(target, context).encode("utf-8"))
+                    output_file.write(b"\n")
 
-    def generate_context_pairs(self, tokens: List[dict], window_size: int) \
+    def _generate_context_pairs(self, tokens: List[dict], window_size: int) \
             -> List[Tuple[int, int]]:
         for i, target in enumerate(tokens):
             target_index = self.vocabulary.index(target)

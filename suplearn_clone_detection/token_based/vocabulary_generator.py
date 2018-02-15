@@ -30,12 +30,16 @@ def generate_vocabulary(filepath: str, size: int, include_values: bool) -> Vocab
         for row in f:
             tokens = json.loads(row)
             for token in tokens:
-                key = (token["type"], token.get("value"))
+                if include_values:
+                    key = (token["type"], token.get("value"))
+                    # allow to fallback to type only
+                    if token.get("value") is not None:
+                        no_value_key = (token["type"], None)
+                        counts[no_value_key] = counts.get(no_value_key, 0) + 1
+                else:
+                    key = (token["type"], None)
+
                 counts[key] = counts.get(key, 0) + 1
-                # allow to fallback to type only
-                if include_values and token.get("value") is not None:
-                    no_value_key = (token["type"], None)
-                    counts[no_value_key] = counts.get(no_value_key, 0) + 1
     sorted_counts = sorted(counts.items(), key=lambda v: -v[1])
     entries = {make_key(token, include_values): make_token(i, token, count)
                for i, (token, count) in enumerate(sorted_counts[:size])}
