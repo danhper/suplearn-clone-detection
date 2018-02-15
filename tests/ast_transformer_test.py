@@ -9,7 +9,7 @@ from tests.base import TestCase
 class TransformerTestCase(TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.vocabulary = Vocabulary(cls.fixture_path("vocab-noid.tsv"))
+        cls.vocabulary = Vocabulary.from_file(cls.fixture_path("vocab-noid.tsv"))
         with open(cls.fixture_path("asts.json"), "r") as f:
             cls.asts = [json.loads(v) for v in f.read().split("\n") if v]
 

@@ -72,7 +72,7 @@ def create_all(languages: List[LanguageConfig]) -> List[ASTTransformer]:
 
 
 def create(language_config: LanguageConfig) -> ASTTransformer:
-    vocab = Vocabulary(language_config.vocabulary)
+    vocab = Vocabulary.from_file(language_config.vocabulary)
     language_config.vocabulary_size = len(vocab)
     transformer_class = get_class(language_config)
     return transformer_class(language_config.name,
