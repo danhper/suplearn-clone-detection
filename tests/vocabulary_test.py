@@ -13,26 +13,27 @@ class VocabularyTest(TestCase):
             cls.fixture_path("vocab-100.tsv"), fallback_empty_value=False)
 
     def test_valid_access_no_value(self):
-        self.assertEqual(self.vocab_no_values[{"type": "SimpleName"}], 0)
-        self.assertEqual(self.vocab_no_values[{"type": "BinaryExpr"}], 10)
-        self.assertEqual(self.vocab_no_values[{"type": "DoStmt"}], 60)
+        self.assertEqual(self.vocab_no_values.index({"type": "SimpleName"}), 0)
+        self.assertEqual(self.vocab_no_values.index({"type": "BinaryExpr"}), 10)
+        self.assertEqual(self.vocab_no_values.index({"type": "DoStmt"}), 60)
 
     def test_valid_access_with_value(self):
-        self.assertEqual(self.vocab_with_values[{"type": "SimpleName"}], 0)
-        self.assertEqual(self.vocab_with_values[{"type": "IntegerLiteralExpr", "value": "0"}], 21)
+        self.assertEqual(self.vocab_with_values.index({"type": "SimpleName"}), 0)
         self.assertEqual(
-            self.vocab_with_values[{"type": "BooleanLiteralExpr", "value": "true"}], 67)
+            self.vocab_with_values.index({"type": "IntegerLiteralExpr", "value": "0"}), 21)
+        self.assertEqual(
+            self.vocab_with_values.index({"type": "BooleanLiteralExpr", "value": "true"}), 67)
 
     def test_keyerror_no_value(self):
         with self.assertRaises(KeyError):
-            _ = self.vocab_no_values[{"type": "IDontExist"}]
+            _ = self.vocab_no_values.index({"type": "IDontExist"})
 
     def test_keyerror_with_value(self):
         with self.assertRaises(KeyError):
-            _ = self.vocab_with_values[{"type": "IDontExist"}]
+            _ = self.vocab_with_values.index({"type": "IDontExist"})
 
         with self.assertRaises(KeyError):
-            _ = self.vocab_with_values[{"type": "SimpleName", "value": "dont-exist"}]
+            _ = self.vocab_with_values.index({"type": "SimpleName", "value": "dont-exist"})
 
     def test_save(self):
         with tempfile.NamedTemporaryFile(prefix="suplearn-cc") as f:

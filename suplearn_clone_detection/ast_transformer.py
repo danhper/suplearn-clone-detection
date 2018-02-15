@@ -26,7 +26,7 @@ class ASTTransformer:
         return False
 
     def node_index(self, node):
-        return self.vocabulary[node] + self.vocabulary_offset
+        return self.vocabulary.index(node) + self.vocabulary_offset
 
     def pad(self, indexes, pad_value=np.int32(0)):
         return indexes + [pad_value] * (self.input_length - len(indexes))

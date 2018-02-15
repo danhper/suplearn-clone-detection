@@ -1,24 +1,29 @@
-import csv
 import json
 import numpy as np
+
+
+BASE_HEADERS = ["id", "type", "metaType", "count"]
 
 
 class Vocabulary:
     @classmethod
     def from_file(cls, filepath, fallback_empty_value=True):
-        entries, headers, has_values = cls._parse_file(filepath)
+        entries, has_values = cls._parse_file(filepath)
         vocab = Vocabulary(
-            headers=headers,
+            entries=entries,
             has_values=has_values,
             fallback_empty_value=fallback_empty_value)
-        vocab.entries = entries
         return vocab
 
-    def __init__(self, headers, has_values=True, fallback_empty_value=True):
-        self.headers = headers
+    def __init__(self, entries=None, has_values=True, fallback_empty_value=True):
+        self.headers = BASE_HEADERS.copy()
+        if has_values:
+            self.headers.append("value")
         self.has_values = has_values
         self.fallback_empty_value = fallback_empty_value
-        self.entries = {}
+        if not entries:
+            entries = {}
+        self.entries = entries
 
     def __eq__(self, other):
         if not isinstance(other, Vocabulary):
@@ -30,8 +35,8 @@ class Vocabulary:
     def _parse_file(filepath):
         entries = {}
         with open(filepath, "r", newline="") as f:
-            # reader = csv.DictReader(f, delimiter="\t", quoting=csv.QUOTE_NONE)
             headers = next(f).strip().split("\t")
+            assert BASE_HEADERS == headers[:len(BASE_HEADERS)]
             has_values = "value" in headers
             entries = {}
             for row in f:
@@ -42,25 +47,31 @@ class Vocabulary:
                 key = (entry["type"],)
                 if has_values:
                     key += (entry["value"],)
-                letter_id = np.int32(entry["id"])
-                entries[key] = {"id": letter_id, "data": entry}
-        return entries, headers, has_values
+                entry["id"] = int(entry["id"])
+                entries[key] = entry
+        return entries, has_values
 
     def __len__(self):
         return len(self.entries)
 
     def __getitem__(self, token):
+        if isinstance(token, tuple):
+            return self.entries[token]
+
         if not self.has_values:
-            return self.entries[(token["type"],)]["id"]
+            return self.entries[(token["type"],)]
 
         key = (token["type"], token.get("value"))
         result = self.entries.get(key)
         if result is not None:
-            return result["id"]
+            return result
         elif self.fallback_empty_value:
-            return self.entries[(token["type"], None)]["id"]
+            return self.entries[(token["type"], None)]
         else:
             raise KeyError(key)
+
+    def index(self, token):
+        return np.int32(self[token]["id"])
 
     def save(self, path, offset=0):
         with open(path, "w") as f:
@@ -71,9 +82,8 @@ class Vocabulary:
                     row.append('"padding"')
                 print("\t".join(row), file=f)
             for entry in sorted(self.entries.values(), key=lambda x: x["id"]):
-                data = entry["data"]
-                row = [str(data["id"] + offset), data["type"],
-                       data["metaType"], str(data["count"])]
+                row = [str(entry["id"] + offset), entry["type"],
+                       entry.get("metaType", "Other"), str(entry["count"])]
                 if self.has_values:
-                    row.append(json.dumps(data["value"]) if data["value"] else "")
+                    row.append(json.dumps(entry["value"]) if entry["value"] else "")
                 print("\t".join(row), file=f)
