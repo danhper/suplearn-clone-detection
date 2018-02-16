@@ -1,46 +1,37 @@
-from typing import Tuple, Optional
+import logging
+from typing import Tuple, Optional, Dict
 
 import json
 from suplearn_clone_detection.vocabulary import Vocabulary
+from suplearn_clone_detection.token_based import util
+from suplearn_clone_detection.token_based.vocab_item import VocabItem
 
 
-def make_key(token: Tuple[str, Optional[str]], include_values: bool):
-    token_type, value = token
-    key = (token_type,)
-    if include_values:
-        key += (value,)
-    return key
-
-
-def make_token(index: int, token: Tuple[str, Optional[str]], count: int):
-    token_type, value = token
-    meta_type = token_type.split(".")[0]
-    return dict(
-        id=index,
-        type=token_type,
-        metaType=meta_type,
-        value=value,
-        count=count
-    )
+def get_or_add_token(counts: Dict[Tuple[str, Optional[str]], VocabItem],
+                     token_type: str, token_value: Optional[str]) -> VocabItem:
+    key = (token_type, token_value)
+    if key in counts:
+        return counts[key]
+    item = VocabItem(token_type, token_value)
+    counts[key] = item
+    return item
 
 
 def generate_vocabulary(filepath: str, size: int, include_values: bool) -> Vocabulary:
     counts = {}
-    with open(filepath) as f:
-        for row in f:
+    total_lines = util.get_lines_count(filepath)
+    logging.info("generating vocabulary from %s files", total_lines)
+    with util.open_file(filepath) as f:
+        for i, row in enumerate(f):
             tokens = json.loads(row)
             for token in tokens:
                 if include_values:
-                    key = (token["type"], token.get("value"))
-                    # allow to fallback to type only
-                    if token.get("value") is not None:
-                        no_value_key = (token["type"], None)
-                        counts[no_value_key] = counts.get(no_value_key, 0) + 1
-                else:
-                    key = (token["type"], None)
-
-                counts[key] = counts.get(key, 0) + 1
-    sorted_counts = sorted(counts.items(), key=lambda v: -v[1])
-    entries = {make_key(token, include_values): make_token(i, token, count)
-               for i, (token, count) in enumerate(sorted_counts[:size])}
+                    get_or_add_token(counts, token["type"], token.get("value")).count += 1
+                if not include_values or token.get("value") is not None:
+                    get_or_add_token(counts, token["type"], None).count += 1
+            if i > 0 and i % 1000 == 0:
+                logging.info("progress: %s/%s", i, total_lines)
+    vocab_items = sorted(counts.values(), reverse=True)[:size]
+    entries = {item.make_key(include_values): item.make_token(i)
+               for i, item in enumerate(vocab_items)}
     return Vocabulary(entries=entries, has_values=include_values)
