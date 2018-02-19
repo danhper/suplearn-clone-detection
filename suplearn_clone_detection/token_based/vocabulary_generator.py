@@ -24,6 +24,8 @@ def generate_vocabulary(filepath: str, size: int, include_values: bool) -> Vocab
     with util.open_file(filepath) as f:
         for i, row in enumerate(f):
             tokens = json.loads(row)
+            if isinstance(tokens, dict) and "tokens" in tokens:
+                tokens = tokens["tokens"]
             for token in tokens:
                 if include_values:
                     get_or_add_token(counts, token["type"], token.get("value")).count += 1

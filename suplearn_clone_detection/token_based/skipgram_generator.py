@@ -19,6 +19,8 @@ class SkipgramGenerator:
              gzip.open(output, "wb") as output_file:
             for i, row in enumerate(token_files):
                 tokens = json.loads(row)
+                if isinstance(tokens, dict) and "tokens" in tokens:
+                    tokens = tokens["tokens"]
                 for target, context in self._generate_context_pairs(tokens, window_size):
                     output_file.write("{0},{1}".format(target, context).encode("utf-8"))
                     output_file.write(b"\n")
