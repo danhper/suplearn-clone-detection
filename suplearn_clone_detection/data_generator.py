@@ -82,7 +82,8 @@ class DataGenerator:
     # pylint: disable=too-many-instance-attributes
 
     def __init__(self, config, ast_transformers):
-        self.ast_loader = ASTLoader(config.asts_path, config.filenames_path)
+        self.ast_loader = ASTLoader(
+            config.asts_path, config.filenames_path, config.file_format)
         self.config = config
         self.ast_transformers = {tr.language: tr for tr in  ast_transformers}
         self.languages = [tr.language for tr in ast_transformers]
