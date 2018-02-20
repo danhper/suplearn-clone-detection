@@ -1,19 +1,32 @@
+import gzip
 import json
 from os import path
 
+
 class ASTLoader:
-    def __init__(self, asts_path, filenames_path=None):
-        if filenames_path is None:
-            filenames_path = path.splitext(asts_path)[0] + ".txt"
-        self._load_asts(asts_path)
-        self._load_names(filenames_path)
+    def __init__(self, asts_path, filenames_path=None, file_format="multi_file"):
+        if file_format == "multi_file":
+            if filenames_path is None:
+                filenames_path = path.splitext(asts_path)[0] + ".txt"
+            self._load_asts(asts_path)
+            self._load_names(filenames_path)
+        elif file_format == "single_file":
+            self._load_single_file_format(asts_path)
+        else:
+            raise ValueError("unknown format {0}".format(file_format))
+
+    def _load_single_file_format(self, filepath):
+        with self._open(filepath) as f:
+            entries = [json.loads(row) for row in f]
+            self.names = {entry["filename"]: index for (index, entry) in enumerate(entries)}
+            self.asts = [entry["tokens"] for entry in entries]
 
     def _load_names(self, names_path):
-        with open(names_path, "r") as f:
+        with self._open(names_path) as f:
             self.names = {filename.strip(): index for (index, filename) in enumerate(f)}
 
     def _load_asts(self, asts_path):
-        with open(asts_path, "r") as f:
+        with self._open(asts_path) as f:
             self.asts = [json.loads(ast) for ast in f]
 
     def get_ast(self, filename):
@@ -21,3 +34,10 @@ class ASTLoader:
 
     def has_file(self, filename):
         return filename in self.names
+
+    @staticmethod
+    def _open(filename):
+        if filename.endswith(".gz"):
+            return gzip.open(filename)
+        else:
+            return open(filename)
