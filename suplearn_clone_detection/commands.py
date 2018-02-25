@@ -64,7 +64,7 @@ def predict(options: Dict[str, str]):
         files_base_dir = options.get("files_base_dir") or ""
         files = []
         for line in f:
-            pair = line.split("," if "," in line else " ")[:2]
+            pair = line.strip().split("," if "," in line else " ")[:2]
             files.append(tuple(path.join(files_base_dir, filename) for filename in pair))
 
     predictor = Predictor.from_config(options["config"], options["model"], options)
