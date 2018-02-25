@@ -3,6 +3,36 @@ import argparse
 import logging
 
 from suplearn_clone_detection import commands
+from suplearn_clone_detection.token_based import commands as token_commands
+
+
+def create_token_parser(base_subparsers):
+    token_parser = base_subparsers.add_parser("tokens", help="Tokens-based data creation commands")
+    subparsers = token_parser.add_subparsers(dest="subcommand")
+
+    create_vocab_parser = subparsers.add_parser(
+        "create-vocabulary", help="Create vocabulary from tokens file")
+    create_vocab_parser.add_argument("input", help="Input file containing tokens")
+    create_vocab_parser.add_argument(
+        "-o", "--output", help="Vocabulary output file", required=True)
+    create_vocab_parser.add_argument(
+        "--size", help="Maxiumum size of the vocabulary", type=int, default=10000)
+    create_vocab_parser.add_argument(
+        "--strip-values",
+        help="Maxiumum size of the vocabulary",
+        default=True,
+        action="store_false",
+        dest="include_values")
+
+    create_skipgram_data_parser = subparsers.add_parser(
+        "skipgram-data", help="Create data to train skipgram model")
+    create_skipgram_data_parser.add_argument("input", help="Input file containing tokens")
+    create_skipgram_data_parser.add_argument(
+        "-o", "--output", help="Vocabulary output file", required=True)
+    create_skipgram_data_parser.add_argument(
+        "-v", "--vocabulary", help="Path to the vocabulary file", required=True)
+    create_skipgram_data_parser.add_argument(
+        "-w", "--window-size", help="Window size to generate context", type=int, default=2)
 
 
 def create_parser():
@@ -77,8 +107,24 @@ def create_parser():
     show_results_parser.add_argument("metric", help="the metric to show")
     show_results_parser.add_argument("-o", "--output", help="output file to save the result")
 
+    create_token_parser(subparsers)
+
 
     return parser
+
+
+app_parser = create_parser()
+
+
+def run_token_command(args):
+    if args.subcommand == "create-vocabulary":
+        token_commands.create_vocabulary(
+            args.input, args.size, args.include_values, args.output)
+    elif args.subcommand == "skipgram-data":
+        token_commands.generate_skipgram_data(
+            args.input, args.vocabulary, args.window_size, args.output)
+    else:
+        app_parser.error("no subcommand provided")
 
 
 def run_command(args):
@@ -92,13 +138,14 @@ def run_command(args):
         commands.generate_data(args.config, args.output, args.data_type)
     elif args.command == "show-results":
         commands.show_results(args.filepath, args.metric, args.output)
+    elif args.command == "tokens":
+        run_token_command(args)
+    else:
+        app_parser.error("no command provided")
 
 
 def run():
-    parser = create_parser()
-    args = parser.parse_args()
-    if not args.command:
-        parser.error("no command provided")
+    args = app_parser.parse_args()
 
     log_level = logging.INFO if args.quiet else logging.DEBUG
     logging.basicConfig(level=log_level,

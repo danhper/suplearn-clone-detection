@@ -26,7 +26,7 @@ class ASTTransformer:
         return False
 
     def node_index(self, node):
-        return self.vocabulary[node] + self.vocabulary_offset
+        return self.vocabulary.index(node) + self.vocabulary_offset
 
     def pad(self, indexes, pad_value=np.int32(0)):
         return indexes + [pad_value] * (self.input_length - len(indexes))
@@ -72,7 +72,7 @@ def create_all(languages: List[LanguageConfig]) -> List[ASTTransformer]:
 
 
 def create(language_config: LanguageConfig) -> ASTTransformer:
-    vocab = Vocabulary(language_config.vocabulary)
+    vocab = Vocabulary.from_file(language_config.vocabulary)
     language_config.vocabulary_size = len(vocab)
     transformer_class = get_class(language_config)
     return transformer_class(language_config.name,

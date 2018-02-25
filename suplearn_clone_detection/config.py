@@ -58,6 +58,7 @@ class GeneratorConfig:
         self.filenames_path = None
         if "filenames_path " in config:
             self.filenames_path = path.expandvars(config["filenames_path"])
+        self.file_format = config.get("file_format", "multi_file")
         self.use_all_combinations = config.get("use_all_combinations", False)
         self.shuffle = config.get("shuffle", True)
         self.shuffle_before_epoch = config.get("shuffle_before_epoch", True)

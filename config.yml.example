@@ -27,6 +27,7 @@ model:
 
 generator:
   submissions_path: $HOME/workspaces/research/dataset/atcoder/submissions.json
+  file_format: multi_file
   asts_path: $HOME/workspaces/research/dataset/atcoder/asts/asts.json
   use_all_combinations: false
   split_ratio: [0.8, 0.1, 0.1]
