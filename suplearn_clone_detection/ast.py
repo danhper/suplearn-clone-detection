@@ -17,6 +17,13 @@ class Node:
         for child in children:
             yield from child.dfs(reverse)
 
+    def bfs(self):
+        queue = [self]
+        while queue:
+            node = queue.pop()
+            yield node
+            for child in node.children:
+                queue.insert(0, child)
 
 def from_list(list_ast):
     def create_node(index):

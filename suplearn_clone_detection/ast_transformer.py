@@ -1,4 +1,5 @@
 from typing import Type, List
+import itertools
 import sys
 
 import numpy as np
@@ -21,6 +22,14 @@ class ASTTransformer:
     def transform_ast(self, list_ast):
         raise NotImplementedError()
 
+    def nodes_to_indexes(self, nodes):
+        indexes = [self.node_index(node) for node in nodes]
+        if not self.input_length:
+            return indexes
+        if len(indexes) > self.input_length:
+            return False
+        return self.pad(indexes)
+
     @property
     def split_input(self):
         return False
@@ -34,12 +43,13 @@ class ASTTransformer:
 
 class DFSTransformer(ASTTransformer):
     def transform_ast(self, list_ast):
-        indexes = [self.node_index(node) for node in list_ast]
-        if not self.input_length:
-            return indexes
-        if len(indexes) > self.input_length:
-            return False
-        return self.pad(indexes)
+        return self.nodes_to_indexes(list_ast)
+
+
+class BFSTransformer(ASTTransformer):
+    def transform_ast(self, list_ast):
+        ast_root = ast.from_list(list_ast)
+        return self.nodes_to_indexes(ast_root.bfs())
 
 
 class BiDFSTransformer(ASTTransformer):
@@ -50,13 +60,8 @@ class BiDFSTransformer(ASTTransformer):
 
     def transform_ast(self, list_ast):
         ast_root = ast.from_list(list_ast)
-        forward_indexes = [self.node_index(node) for node in ast_root.dfs()]
-        backward_indexes = [self.node_index(node) for node in ast_root.dfs(reverse=True)]
-        if not self.input_length:
-            return forward_indexes + backward_indexes
-        if len(forward_indexes) > self.input_length:
-            return False
-        return self.pad(forward_indexes) + self.pad(backward_indexes)
+        return self.nodes_to_indexes(ast_root.dfs()) + \
+               self.nodes_to_indexes(ast_root.dfs(reverse=True))
 
     @property
     def split_input(self):

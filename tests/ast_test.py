@@ -6,6 +6,11 @@ from suplearn_clone_detection import ast
 
 
 class AstTest(TestCase):
+    ast_nodes = [{"type": "root", "children": [1, 2]},
+                 {"type": "child1", "children": [3]},
+                 {"type": "child2"},
+                 {"type": "grand-child1"}]
+
     @classmethod
     def setUpClass(cls):
         with open(cls.fixture_path("asts.json")) as f:
@@ -40,21 +45,23 @@ class AstTest(TestCase):
         root = ast.from_list(list_ast)
         self.assertEqual(root.type, "CompilationUnit")
 
+    def test_bfs(self):
+        root = ast.from_list(self.ast_nodes)
+        bfs_types = [node["type"] for node in root.bfs()]
+        expected = ["root", "child1", "child2", "grand-child1"]
+        self.assertEqual(expected, bfs_types)
+
     def test_dfs(self):
-        list_ast = self.asts[0]
-        root = ast.from_list(list_ast)
-        dfs_types = [node.type for node in root.dfs()]
-        expected = [node["type"] for node in list_ast]
-        self.assertEqual(dfs_types, expected)
+        root = ast.from_list(self.ast_nodes)
+        dfs_types = [node["type"] for node in root.dfs()]
+        expected = ["root", "child1", "grand-child1", "child2"]
+        self.assertEqual(expected, dfs_types)
 
     def test_dfs_reverse(self):
-        list_ast = self.asts[0]
-        root = ast.from_list(list_ast)
-        reversed_dfs_types = [node.type for node in root.dfs(reverse=True)]
-        not_expected = [node["type"] for node in list_ast]
-        self.assertNotEqual(reversed_dfs_types, not_expected)
-        self.assertEqual(reversed_dfs_types[1], "ClassOrInterfaceDeclaration")
-        self.assertEqual(reversed_dfs_types[2], "MethodDeclaration")
+        root = ast.from_list(self.ast_nodes)
+        dfs_types = [node["type"] for node in root.dfs(reverse=True)]
+        expected = ["root", "child2", "child1", "grand-child1"]
+        self.assertEqual(expected, dfs_types)
 
     def _load_list_ast(self):
         with open(self.fixture_path("asts.json")) as f:
