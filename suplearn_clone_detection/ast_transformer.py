@@ -1,5 +1,4 @@
 from typing import Type, List
-import itertools
 import sys
 
 import numpy as np
@@ -52,20 +51,29 @@ class BFSTransformer(ASTTransformer):
         return self.nodes_to_indexes(ast_root.bfs())
 
 
-class BiDFSTransformer(ASTTransformer):
+class MultiTransformer(ASTTransformer):
     def __init__(self, lang, vocabulary, vocabulary_offset=0, input_length=None):
-        super(BiDFSTransformer, self).__init__(lang, vocabulary, vocabulary_offset, input_length)
+        super(MultiTransformer, self).__init__(lang, vocabulary, vocabulary_offset, input_length)
         if self.total_input_length:
             self.total_input_length *= 2
-
-    def transform_ast(self, list_ast):
-        ast_root = ast.from_list(list_ast)
-        return self.nodes_to_indexes(ast_root.dfs()) + \
-               self.nodes_to_indexes(ast_root.dfs(reverse=True))
 
     @property
     def split_input(self):
         return True
+
+
+class DBFSTransformer(MultiTransformer):
+    def transform_ast(self, list_ast):
+        ast_root = ast.from_list(list_ast)
+        return self.nodes_to_indexes(ast_root.dfs()) + \
+               self.nodes_to_indexes(ast_root.bfs())
+
+
+class BiDFSTransformer(MultiTransformer):
+    def transform_ast(self, list_ast):
+        ast_root = ast.from_list(list_ast)
+        return self.nodes_to_indexes(ast_root.dfs()) + \
+               self.nodes_to_indexes(ast_root.dfs(reverse=True))
 
 
 def get_class(language_config: LanguageConfig) -> Type[ASTTransformer]:
