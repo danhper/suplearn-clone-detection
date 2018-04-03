@@ -107,19 +107,68 @@ class SplitInput(Wrapper):
         return constr
 
 
-class AbsDiff(_Merge):
-    def _merge_function(self, inputs):
+class _PairMerge(_Merge):
+    def _check_merge_inputs(self, inputs):
+        class_name = self.__class__.__name__
         if len(inputs) != 2:
-            raise ValueError('`AbsDiff` layer should be called '
-                             'on exactly 2 inputs')
-        if inputs[0]._keras_shape != inputs[1]._keras_shape:
-            raise ValueError('`AbsDiff` layer should be called '
-                             'on inputs of the same shape')
+            raise ValueError('`{0}` layer should be called '
+                             'on exactly 2 inputs'.format(class_name))
+        if K.int_shape(inputs[0]) != K.int_shape(inputs[1]):
+            raise ValueError('`{0}` layer should be called '
+                             'on inputs of the same shape'.format(class_name))
+
+
+class AbsDiff(_PairMerge):
+    def _merge_function(self, inputs):
+        self._check_merge_inputs(inputs)
         return K.abs(inputs[0] - inputs[1])
+
+
+class EuclideanDistance(_PairMerge):
+    def __init__(self, *args, max_value=None, normalize=False, **kwargs):
+        super(EuclideanDistance, self).__init__(*args, **kwargs)
+        self.max_value = max_value
+        self.normalize = normalize
+        if self.normalize and not self.max_value:
+            raise ValueError("max_value must be provided to normalize output")
+
+    def _merge_function(self, inputs):
+        self._check_merge_inputs(inputs)
+        squared_difference = K.pow(inputs[0] - inputs[1], 2)
+        distance = K.sqrt(K.sum(squared_difference))
+        if self.max_value:
+            distance = K.clip(distance, 0, self.max_value)
+        if self.normalize:
+            distance /= self.max_value
+        return distance
+
+    def compute_output_shape(self, input_shape):
+        shape = list(input_shape)
+        return (shape[0], 1)
+
+
+class EuclideanSimilarity(EuclideanDistance):
+    def __init__(self, *args, max_value=None, **kwargs):
+        super(EuclideanSimilarity, self).__init__(
+            *args, max_value=max_value, normalize=True, **kwargs)
+        if not max_value:
+            raise ValueError("max_value must be provided")
+
+    def _merge_function(self, inputs):
+        distance = super(EuclideanSimilarity, self)._merge_function(inputs)
+        return 1 - distance
 
 
 def abs_diff(inputs, **kwargs):
     return AbsDiff(**kwargs)(inputs)
+
+
+def euclidean_distance(inputs, **kwargs):
+    return EuclideanDistance(**kwargs)(inputs)
+
+
+def euclidean_similarity(inputs, **kwargs):
+    return EuclideanSimilarity(**kwargs)(inputs)
 
 
 class DenseMulti(Layer):

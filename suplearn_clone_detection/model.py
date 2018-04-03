@@ -8,7 +8,25 @@ from keras.layers import LSTM, Bidirectional, Embedding, concatenate, Dense, mul
 
 from suplearn_clone_detection import ast_transformer
 from suplearn_clone_detection.config import LanguageConfig, ModelConfig
-from suplearn_clone_detection.layers import SplitInput, abs_diff, DenseMulti
+from suplearn_clone_detection.layers import SplitInput, abs_diff, DenseMulti, euclidean_similarity
+
+
+class ModelWrapper(Model):
+    def save(self, filepath, overwrite=True, include_optimizer=True):
+        kwargs = dict(overwrite=overwrite, include_optimizer=include_optimizer)
+        super(ModelWrapper, self).save("full-{0}".format(filepath), **kwargs)
+        self.get_layer("encoder_1").save("encoder1-{0}".format(filepath), **kwargs)
+        self.get_layer("encoder_2").save("encoder1-{0}".format(filepath), **kwargs)
+
+    def summary(self, line_length=None, positions=None, print_fn=print):
+        kwargs = dict(line_length=line_length, positions=positions,
+                      print_fn=print_fn)
+        print_fn("Encoder 1:")
+        self.get_layer("encoder_1").summary(**kwargs)
+        print("Encoder 2:")
+        self.get_layer("encoder_2").summary(**kwargs)
+        print("Main model:")
+        super(ModelWrapper, self).summary(**kwargs)
 
 
 def make_embeddings(lang_config: LanguageConfig, index: int):
@@ -67,7 +85,7 @@ def create_encoder(lang_config: LanguageConfig, index: int):
     if lang_config.hash_dim:
         x = Dense(lang_config.hash_dim, use_bias=False)(x)
 
-    encoder = Model(inputs=ast_input, outputs=x)
+    encoder = Model(inputs=ast_input, outputs=x, name="encoder_{0}".format(index))
     return ast_input, encoder
 
 
@@ -84,17 +102,22 @@ def create_model(model_config: ModelConfig):
         hx = multiply([output_lang1, output_lang2])
         hp = abs_diff([output_lang1, output_lang2])
         x = DenseMulti(model_config.merge_output_dim)([hx, hp])
+    elif model_config.merge_mode == "euclidean_similarity":
+        x = euclidean_similarity([output_lang1, output_lang2],
+                                 max_value=model_config.normalization_value)
     else:
         raise ValueError("invalid merge mode")
 
-    for layer_size in model_config.dense_layers:
-        x = Dense(layer_size, activation="relu")(x)
-    main_output = Dense(1, activation="sigmoid", name="main_output")(x)
+    if model_config.indexable_output:
+        main_output = x
+    else:
+        for layer_size in model_config.dense_layers:
+            x = Dense(layer_size, activation="relu")(x)
+            main_output = Dense(1, activation="sigmoid", name="main_output")(x)
 
-    model = Model(inputs=[input_lang1, input_lang2], outputs=main_output)
+    model = ModelWrapper(inputs=[input_lang1, input_lang2], outputs=main_output)
     optimizer_class = getattr(optimizers, model_config.optimizer["type"])
     optimizer = optimizer_class(**model_config.optimizer.get("options", {}))
-    model.compile(optimizer=optimizer,
-                  loss="binary_crossentropy",
-                  metrics=["accuracy"])
+    model.compile(optimizer=optimizer, loss=model_config.loss, metrics=model_config.metrics)
+
     return model
