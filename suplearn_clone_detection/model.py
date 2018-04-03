@@ -1,5 +1,6 @@
-import numpy as np
+from os import path
 
+import numpy as np
 
 from keras import optimizers
 from keras.models import Model, Input, Layer
@@ -14,9 +15,11 @@ from suplearn_clone_detection.layers import SplitInput, abs_diff, DenseMulti, eu
 class ModelWrapper(Model):
     def save(self, filepath, overwrite=True, include_optimizer=True):
         kwargs = dict(overwrite=overwrite, include_optimizer=include_optimizer)
-        super(ModelWrapper, self).save("full-{0}".format(filepath), **kwargs)
-        self.get_layer("encoder_1").save("encoder1-{0}".format(filepath), **kwargs)
-        self.get_layer("encoder_2").save("encoder1-{0}".format(filepath), **kwargs)
+        dirname, filename = path.dirname(filepath), path.basename(filepath)
+        make_filepath = lambda prefix: path.join(dirname, "{0}-{1}".format(prefix, filename))
+        super(ModelWrapper, self).save(make_filepath("full"), **kwargs)
+        self.get_layer("encoder_1").save(make_filepath("encoder1"), **kwargs)
+        self.get_layer("encoder_2").save(make_filepath("encoder2"), **kwargs)
 
     def summary(self, line_length=None, positions=None, print_fn=print):
         kwargs = dict(line_length=line_length, positions=positions,
