@@ -43,7 +43,8 @@ class ModelConfig:
         "simple",
         "bidistance",
         "euclidean_distance",
-        "euclidean_similarity"
+        "euclidean_similarity",
+        "cosine_similarity"
     ]
 
     def __init__(self, config):

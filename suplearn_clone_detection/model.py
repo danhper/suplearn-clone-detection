@@ -9,7 +9,8 @@ from keras.layers import LSTM, Bidirectional, Embedding, concatenate, Dense, mul
 
 from suplearn_clone_detection import ast_transformer
 from suplearn_clone_detection.config import LanguageConfig, ModelConfig
-from suplearn_clone_detection.layers import SplitInput, abs_diff, DenseMulti, euclidean_similarity
+from suplearn_clone_detection.layers import SplitInput, abs_diff, DenseMulti, \
+    euclidean_similarity, cosine_similarity
 
 
 class ModelWrapper(Model):
@@ -108,6 +109,8 @@ def create_model(model_config: ModelConfig):
     elif model_config.merge_mode == "euclidean_similarity":
         x = euclidean_similarity([output_lang1, output_lang2],
                                  max_value=model_config.normalization_value)
+    elif model_config.merge_mode == "cosine_similarity":
+        x = cosine_similarity([output_lang1, output_lang2], min_value=0)
     else:
         raise ValueError("invalid merge mode")
 

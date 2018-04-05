@@ -2,10 +2,14 @@ import copy
 
 from keras import activations, initializers, regularizers, constraints
 from keras.engine import Layer, InputSpec
-from keras.layers.merge import _Merge
+from keras.layers.merge import _Merge, Dot
 from keras.layers.wrappers import Wrapper
 from keras.utils.generic_utils import has_arg
 import keras.backend as K
+
+
+def norm(x):
+    return K.sqrt(K.sum(K.pow(x, 2)))
 
 
 class SplitInput(Wrapper):
@@ -134,8 +138,7 @@ class EuclideanDistance(_PairMerge):
 
     def _merge_function(self, inputs):
         self._check_merge_inputs(inputs)
-        squared_difference = K.pow(inputs[0] - inputs[1], 2)
-        distance = K.sqrt(K.sum(squared_difference))
+        distance = norm(inputs[0] - inputs[1])
         if self.max_value:
             distance = K.clip(distance, 0, self.max_value)
         if self.normalize:
@@ -159,6 +162,18 @@ class EuclideanSimilarity(EuclideanDistance):
         return 1 - distance
 
 
+class CosineSimilarity(Dot):
+    def __init__(self, *args, min_value=-1, **kwargs):
+        super(CosineSimilarity, self).__init__(1, *args, **kwargs)
+        self.min_value = min_value
+
+    def call(self, inputs):
+        dot_product = super(CosineSimilarity, self).call(inputs)
+        magnitude = norm(inputs[0]) * norm(inputs[1])
+        result = dot_product / magnitude
+        return K.clip(result, self.min_value, 1)
+
+
 def abs_diff(inputs, **kwargs):
     return AbsDiff(**kwargs)(inputs)
 
@@ -169,6 +184,10 @@ def euclidean_distance(inputs, **kwargs):
 
 def euclidean_similarity(inputs, **kwargs):
     return EuclideanSimilarity(**kwargs)(inputs)
+
+
+def cosine_similarity(inputs, **kwargs):
+    return CosineSimilarity(**kwargs)(inputs)
 
 
 class DenseMulti(Layer):
