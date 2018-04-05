@@ -25,6 +25,7 @@ class LanguageConfig:
         if self.transformer_class_name in TRANSFORMER_MAPPING:
             self.transformer_class_name = TRANSFORMER_MAPPING[self.transformer_class_name]
         self.bidirectional_encoding = config.get("bidirectional_encoding", False)
+        self.hash_dim = config.get("hash_dim")
 
     @property
     def vocabulary_size(self):
@@ -38,7 +39,13 @@ class LanguageConfig:
 
 
 class ModelConfig:
-    KNOWN_MERGE_MODES = ["simple", "bidistance"]
+    KNOWN_MERGE_MODES = [
+        "simple",
+        "bidistance",
+        "euclidean_distance",
+        "euclidean_similarity",
+        "cosine_similarity"
+    ]
 
     def __init__(self, config):
         self.languages = [LanguageConfig(lang) for lang in config["languages"]]
@@ -47,8 +54,13 @@ class ModelConfig:
         self.optimizer = config.get("optimizer", {"type": "sgd"})
         self.merge_mode = config.get("merge_mode", "simple")
         self.merge_output_dim = config.get("merge_output_dim", 64)
+        self.indexable_output = config.get("indexable_output", False)
         if not self.merge_mode in self.KNOWN_MERGE_MODES:
-            raise ValueError("unknown concat mode: {0}".format(self.merge_mode))
+            raise ValueError("unknown merge mode: {0}".format(self.merge_mode))
+        default_loss = "mse" if self.indexable_output else "binary_crossentropy"
+        self.loss = config.get("loss", default_loss)
+        self.metrics = config.get("metrics", ["accuracy"])
+        self.normalization_value = 100
 
 
 class GeneratorConfig:

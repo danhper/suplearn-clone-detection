@@ -64,9 +64,10 @@ class Trainer:
                 vocab_path = path.relpath(self._vocab_path(lang_config.name),
                                           tensorboard_logs_path)
                 metadata["embedding_{0}".format(lang_config.name)] = vocab_path
-            model_callbacks.append(TensorBoard(tensorboard_logs_path,
-                                               embeddings_freq=1,
-                                               embeddings_metadata=metadata))
+            model_callbacks.append(TensorBoard(tensorboard_logs_path))
+                                               # TODO: restore embeddings
+                                               # embeddings_freq=1,
+                                               # embeddings_metadata=metadata))
 
         self.model.fit_generator(
             training_batch_generator,
