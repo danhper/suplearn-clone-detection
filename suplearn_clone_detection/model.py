@@ -1,5 +1,3 @@
-from os import path
-
 import numpy as np
 
 from keras import optimizers
@@ -68,9 +66,11 @@ def create_encoder(lang_config: LanguageConfig, index: int):
                     return_sequences=False)(x)
 
     if lang_config.hash_dim:
-        x = Dense(lang_config.hash_dim, use_bias=False)(x)
+        x = Dense(lang_config.hash_dim, use_bias=False,
+                  name="dense_{0}_{1}".format(lang_config.name, index))(x)
 
-    encoder = Model(inputs=ast_input, outputs=x, name="encoder_{0}".format(index))
+    encoder = Model(inputs=ast_input, outputs=x,
+                    name="encoder_{0}_{1}".format(lang_config.name, index))
     return ast_input, encoder
 
 

@@ -1,4 +1,5 @@
 import copy
+from os import path
 
 from keras import activations, initializers, regularizers, constraints
 from keras.engine import Layer, InputSpec, Model
@@ -8,26 +9,26 @@ from keras.utils.generic_utils import has_arg
 import keras.backend as K
 
 
-def norm(x):
-    return K.sqrt(K.sum(K.pow(x, 2)))
-
 
 class ModelWrapper(Model):
+    @property
+    def encoder_layers(self):
+        return [v for v in self.layers if v.name.startswith("encoder_")]
+
     def save(self, filepath, overwrite=True, include_optimizer=True):
         kwargs = dict(overwrite=overwrite, include_optimizer=include_optimizer)
         dirname, filename = path.dirname(filepath), path.basename(filepath)
         make_filepath = lambda prefix: path.join(dirname, "{0}-{1}".format(prefix, filename))
         super(ModelWrapper, self).save(make_filepath("full"), **kwargs)
-        self.get_layer("encoder_1").save(make_filepath("encoder1"), **kwargs)
-        self.get_layer("encoder_2").save(make_filepath("encoder2"), **kwargs)
+        for i, encoder in enumerate(self.encoder_layers):
+            encoder.save(make_filepath("encoder_{0}".format(i + 1)), **kwargs)
 
     def summary(self, line_length=None, positions=None, print_fn=print):
         kwargs = dict(line_length=line_length, positions=positions,
                       print_fn=print_fn)
-        print_fn("Encoder 1:")
-        self.get_layer("encoder_1").summary(**kwargs)
-        print("Encoder 2:")
-        self.get_layer("encoder_2").summary(**kwargs)
+        for i, encoder in enumerate(self.encoder_layers):
+            print_fn("Encoder {0}:".format(i + 1))
+            encoder.summary(**kwargs)
         print("Main model:")
         super(ModelWrapper, self).summary(**kwargs)
 
@@ -195,6 +196,15 @@ class CosineSimilarity(Dot):
         magnitude = norm(inputs[0]) * norm(inputs[1])
         result = dot_product / magnitude
         return K.clip(result, self.min_value, 1)
+
+    def get_config(self):
+        config = {"min_value": self.min_value}
+        base_config = super(CosineSimilarity, self).get_config()
+        return dict(list(base_config.items()) + list(config.items()))
+
+
+def norm(x):
+    return K.sqrt(K.sum(K.pow(x, 2)))
 
 
 def abs_diff(inputs, **kwargs):
