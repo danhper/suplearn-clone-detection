@@ -65,9 +65,11 @@ def create_encoder(lang_config: LanguageConfig, index: int):
                     position=len(lang_config.output_dimensions),
                     return_sequences=False)(x)
 
-    if lang_config.hash_dim:
-        x = Dense(lang_config.hash_dim, use_bias=False,
-                  name="dense_{0}_{1}".format(lang_config.name, index))(x)
+    for i, dim in enumerate(lang_config.hash_dims):
+        is_last = i == len(lang_config.hash_dims) - 1
+        activation = None if is_last else "relu"
+        x = Dense(dim, use_bias=not is_last, activation=activation,
+                  name="dense_{0}_{1}_{2}".format(lang_config.name, index, i))(x)
 
     encoder = Model(inputs=ast_input, outputs=x,
                     name="encoder_{0}_{1}".format(lang_config.name, index))
@@ -95,14 +97,12 @@ def create_model(model_config: ModelConfig):
     else:
         raise ValueError("invalid merge mode")
 
-    if model_config.indexable_output:
-        main_output = x
-    else:
+    if model_config.use_output_nn:
         for layer_size in model_config.dense_layers:
             x = Dense(layer_size, activation="relu")(x)
-            main_output = Dense(1, activation="sigmoid", name="main_output")(x)
+        x = Dense(1, activation="sigmoid", name="main_output")(x)
 
-    model = ModelWrapper(inputs=[input_lang1, input_lang2], outputs=main_output)
+    model = ModelWrapper(inputs=[input_lang1, input_lang2], outputs=x)
     optimizer_class = getattr(optimizers, model_config.optimizer["type"])
     optimizer = optimizer_class(**model_config.optimizer.get("options", {}))
     model.compile(optimizer=optimizer, loss=model_config.loss, metrics=model_config.metrics)

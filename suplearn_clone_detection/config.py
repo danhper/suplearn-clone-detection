@@ -25,7 +25,7 @@ class LanguageConfig:
         if self.transformer_class_name in TRANSFORMER_MAPPING:
             self.transformer_class_name = TRANSFORMER_MAPPING[self.transformer_class_name]
         self.bidirectional_encoding = config.get("bidirectional_encoding", False)
-        self.hash_dim = config.get("hash_dim")
+        self.hash_dims = config.get("hash_dims", [])
 
     @property
     def vocabulary_size(self):
@@ -49,15 +49,14 @@ class ModelConfig:
 
     def __init__(self, config):
         self.languages = [LanguageConfig(lang) for lang in config["languages"]]
-        self.learning_rate = config.get("learning_rate", 0.01)
         self.dense_layers = config.get("dense_layers", [64, 64])
         self.optimizer = config.get("optimizer", {"type": "sgd"})
         self.merge_mode = config.get("merge_mode", "simple")
         self.merge_output_dim = config.get("merge_output_dim", 64)
-        self.indexable_output = config.get("indexable_output", False)
+        self.use_output_nn = config.get("use_output_nn", True)
         if not self.merge_mode in self.KNOWN_MERGE_MODES:
             raise ValueError("unknown merge mode: {0}".format(self.merge_mode))
-        default_loss = "mse" if self.indexable_output else "binary_crossentropy"
+        default_loss = "mse" if self.use_output_nn else "binary_crossentropy"
         self.loss = config.get("loss", default_loss)
         self.metrics = config.get("metrics", ["accuracy"])
         self.normalization_value = 100
