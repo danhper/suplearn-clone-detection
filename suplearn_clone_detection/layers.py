@@ -1,7 +1,7 @@
 import copy
 
 from keras import activations, initializers, regularizers, constraints
-from keras.engine import Layer, InputSpec
+from keras.engine import Layer, InputSpec, Model
 from keras.layers.merge import _Merge, Dot
 from keras.layers.wrappers import Wrapper
 from keras.utils.generic_utils import has_arg
@@ -10,6 +10,26 @@ import keras.backend as K
 
 def norm(x):
     return K.sqrt(K.sum(K.pow(x, 2)))
+
+
+class ModelWrapper(Model):
+    def save(self, filepath, overwrite=True, include_optimizer=True):
+        kwargs = dict(overwrite=overwrite, include_optimizer=include_optimizer)
+        dirname, filename = path.dirname(filepath), path.basename(filepath)
+        make_filepath = lambda prefix: path.join(dirname, "{0}-{1}".format(prefix, filename))
+        super(ModelWrapper, self).save(make_filepath("full"), **kwargs)
+        self.get_layer("encoder_1").save(make_filepath("encoder1"), **kwargs)
+        self.get_layer("encoder_2").save(make_filepath("encoder2"), **kwargs)
+
+    def summary(self, line_length=None, positions=None, print_fn=print):
+        kwargs = dict(line_length=line_length, positions=positions,
+                      print_fn=print_fn)
+        print_fn("Encoder 1:")
+        self.get_layer("encoder_1").summary(**kwargs)
+        print("Encoder 2:")
+        self.get_layer("encoder_2").summary(**kwargs)
+        print("Main model:")
+        super(ModelWrapper, self).summary(**kwargs)
 
 
 class SplitInput(Wrapper):
@@ -164,7 +184,10 @@ class EuclideanSimilarity(EuclideanDistance):
 
 class CosineSimilarity(Dot):
     def __init__(self, *args, min_value=-1, **kwargs):
-        super(CosineSimilarity, self).__init__(1, *args, **kwargs)
+        # set default axis to 1
+        if not args and "axes" not in kwargs:
+            args = (1,)
+        super(CosineSimilarity, self).__init__(*args, **kwargs)
         self.min_value = min_value
 
     def call(self, inputs):
@@ -291,4 +314,7 @@ custom_objects = {
     "SplitInput": SplitInput,
     "AbsDiff": AbsDiff,
     "DenseMulti": DenseMulti,
+    "ModelWrapper": ModelWrapper,
+    "CosineSimilarity": CosineSimilarity,
+    "EuclideanSimilarity": EuclideanSimilarity,
 }

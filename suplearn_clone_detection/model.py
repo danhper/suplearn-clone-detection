@@ -10,27 +10,8 @@ from keras.layers import LSTM, Bidirectional, Embedding, concatenate, Dense, mul
 from suplearn_clone_detection import ast_transformer
 from suplearn_clone_detection.config import LanguageConfig, ModelConfig
 from suplearn_clone_detection.layers import SplitInput, abs_diff, DenseMulti, \
-    euclidean_similarity, cosine_similarity
+    euclidean_similarity, cosine_similarity, ModelWrapper
 
-
-class ModelWrapper(Model):
-    def save(self, filepath, overwrite=True, include_optimizer=True):
-        kwargs = dict(overwrite=overwrite, include_optimizer=include_optimizer)
-        dirname, filename = path.dirname(filepath), path.basename(filepath)
-        make_filepath = lambda prefix: path.join(dirname, "{0}-{1}".format(prefix, filename))
-        super(ModelWrapper, self).save(make_filepath("full"), **kwargs)
-        self.get_layer("encoder_1").save(make_filepath("encoder1"), **kwargs)
-        self.get_layer("encoder_2").save(make_filepath("encoder2"), **kwargs)
-
-    def summary(self, line_length=None, positions=None, print_fn=print):
-        kwargs = dict(line_length=line_length, positions=positions,
-                      print_fn=print_fn)
-        print_fn("Encoder 1:")
-        self.get_layer("encoder_1").summary(**kwargs)
-        print("Encoder 2:")
-        self.get_layer("encoder_2").summary(**kwargs)
-        print("Main model:")
-        super(ModelWrapper, self).summary(**kwargs)
 
 
 def make_embeddings(lang_config: LanguageConfig, index: int):

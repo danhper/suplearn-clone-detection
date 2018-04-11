@@ -39,7 +39,7 @@ class Predictor:
         return ASTLoader(asts_path, filenames_path)
 
     def predict(self, files: List[Tuple[str, str]]) -> List[float]:
-        batch_size = self.options.get("batch_size", self.config.trainer.batch_size)
+        batch_size = self.options.get("batch_size") or self.config.trainer.batch_size
         predictions = {}
         for i in tqdm(range(len(files) // batch_size + 1)):
             batch_files = files[i * batch_size:(i + 1) * batch_size]
