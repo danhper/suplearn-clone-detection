@@ -3,27 +3,26 @@ jobs:
   build:
     docker:
       - image: circleci/python:3.6
+        environment:
+          PIPENV_VENV_IN_PROJECT: "1"
     working_directory: ~/suplearn-clone-detection
 
     steps:
       - checkout
       - restore_cache:
           keys:
-          - v1-dependencies-{{ checksum "setup.py" }}
+          - v1-dependencies-{{ checksum "Pipfile.lock" }}
       - run:
           name: install dependencies
           command: |
-            python3 -m venv venv
-            . venv/bin/activate
-            pip install -r requirements.txt
-            pip install tensorflow
-            pip install http://download.pytorch.org/whl/cpu/torch-0.3.1-cp36-cp36m-linux_x86_64.whl
+            pip install pipenv
+            pipenv install
+            pipenv run pip install tensorflow
+            pipenv run pip install http://download.pytorch.org/whl/cpu/torch-0.3.1-cp36-cp36m-linux_x86_64.whl
       - save_cache:
           paths:
-            - ./venv
-          key: v1-dependencies-{{ checksum "setup.py" }}
+            - ./.venv
+          key: v1-dependencies-{{ checksum "Pipfile.lock" }}
       - run:
           name: run tests
-          command: |
-            . venv/bin/activate
-            python setup.py test
+          command: pipenv run python setup.py test
