@@ -11,7 +11,7 @@ class LanguageConfig:
     def __init__(self, config):
         self.name = config["name"]
         self.vocabulary = path.expandvars(config["vocabulary"])
-        self._vocabulary_size = None
+        self._vocabulary_size = config.get("vocabulary_size")
         self.embeddings = path.expandvars(config.get("embeddings", ""))
         self.vocabulary_offset = config.get("vocabulary_offset", 0)
         self.input_length = config.get("input_length")
@@ -30,7 +30,7 @@ class LanguageConfig:
     @property
     def vocabulary_size(self):
         if self._vocabulary_size is None:
-            raise ValueError("vocabulary size needs to be set explicitly")
+            raise ValueError("vocabulary size is not set")
         return self._vocabulary_size
 
     @vocabulary_size.setter
