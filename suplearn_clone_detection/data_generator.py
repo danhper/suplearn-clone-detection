@@ -67,7 +67,7 @@ class DataIterator:
             lang2_inputs.append(lang2_input.vector)
             labels.append(label)
 
-        inputs = [np.array(lang1_inputs), np.array(lang2_inputs)]
+        inputs = [np.array(v, dtype=np.long) for v in [lang1_inputs, lang2_inputs]]
         targets = np.array(labels).reshape((len(labels), 1))
         weights = compute_sample_weight("balanced", labels)
         if self.config.class_weights:
@@ -113,7 +113,7 @@ class DataGenerator:
 
         return inputs, targets
 
-    def make_iterator(self, data_type="training"):
+    def make_iterator(self, data_type="training") -> DataIterator:
         data = getattr(self, "{0}_data".format(data_type))
         data_count = self._count_data(data)
         def make_iterator_func():
