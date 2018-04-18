@@ -12,23 +12,22 @@ import keras.backend as K
 
 class ModelWrapper(Model):
     @property
-    def encoder_layers(self):
-        return [v for v in self.layers if v.name.startswith("encoder_")]
+    def inner_models(self):
+        return [v for v in self.layers if isinstance(v, Model)]
 
     def save(self, filepath, overwrite=True, include_optimizer=True):
         kwargs = dict(overwrite=overwrite, include_optimizer=include_optimizer)
-        dirname, filename = path.dirname(filepath), path.basename(filepath)
-        make_filepath = lambda prefix: path.join(dirname, "{0}-{1}".format(prefix, filename))
-        super(ModelWrapper, self).save(make_filepath("full"), **kwargs)
-        for i, encoder in enumerate(self.encoder_layers):
-            encoder.save(make_filepath("encoder_{0}".format(i + 1)), **kwargs)
+        dirname = path.dirname(filepath)
+        super(ModelWrapper, self).save(filepath, **kwargs)
+        for model in self.inner_models:
+            model.save(path.join(dirname, model.name) + ".h5", **kwargs)
 
     def summary(self, line_length=None, positions=None, print_fn=print):
         kwargs = dict(line_length=line_length, positions=positions,
                       print_fn=print_fn)
-        for i, encoder in enumerate(self.encoder_layers):
-            print_fn("Encoder {0}:".format(i + 1))
-            encoder.summary(**kwargs)
+        for model in self.inner_models:
+            print_fn(model.name)
+            model.summary(**kwargs)
         print("Main model:")
         super(ModelWrapper, self).summary(**kwargs)
 
