@@ -4,12 +4,12 @@ import random
 import itertools
 import json
 
+import numpy as np
+from sklearn.utils.class_weight import compute_sample_weight
+
 from suplearn_clone_detection.config import GeneratorConfig, Config
 from suplearn_clone_detection.ast_loader import ASTLoader
 from suplearn_clone_detection import ast_transformer
-
-import numpy as np
-from sklearn.utils.class_weight import compute_sample_weight
 
 
 class DataInput:

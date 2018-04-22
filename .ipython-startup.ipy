@@ -1,0 +1,14 @@
+import tensorflow as tf
+import numpy as np
+from keras.models import load_model
+
+from suplearn_clone_detection import ast_transformer, layers
+from suplearn_clone_detection.config import Config
+from suplearn_clone_detection.ast_loader import ASTLoader
+
+
+config = Config.from_file("./config.yml")
+
+ast_transformers = ast_transformer.create_all(config.model.languages)
+
+sess = tf.InteractiveSession()

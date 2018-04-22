@@ -1,6 +1,11 @@
+import random
 import gzip
 import json
 from os import path
+
+
+def tautology(*_args, **_kwargs):
+    return True
 
 
 class ASTLoader:
@@ -31,6 +36,14 @@ class ASTLoader:
 
     def get_ast(self, filename):
         return self.asts[self.names[filename]]
+
+    def random_ast(self, predicate=tautology):
+        keys = list(self.names.keys())
+        while True:
+            name = random.choice(keys)
+            ast = self.get_ast(name)
+            if predicate(name, ast):
+                return name, ast
 
     def has_file(self, filename):
         return filename in self.names
