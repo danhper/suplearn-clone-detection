@@ -115,6 +115,7 @@ def create_merge_input(lang_config: LanguageConfig,
     return Input(shape=(input_dimension,),
                  name="encoded_{0}_{1}".format(lang_config.name, index))
 
+
 def create_model(model_config: ModelConfig):
     lang1_config, lang2_config = model_config.languages
 
