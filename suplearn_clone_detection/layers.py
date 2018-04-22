@@ -17,10 +17,11 @@ class ModelWrapper(Model):
 
     def save(self, filepath, overwrite=True, include_optimizer=True):
         kwargs = dict(overwrite=overwrite, include_optimizer=include_optimizer)
-        dirname = path.dirname(filepath)
+        filename, ext = path.splitext(filepath)
         super(ModelWrapper, self).save(filepath, **kwargs)
         for model in self.inner_models:
-            model.save(path.join(dirname, model.name) + ".h5", **kwargs)
+            fullpath = f"{filename}-{model.name}{ext}"
+            model.save(fullpath, **kwargs)
 
     def summary(self, line_length=None, positions=None, print_fn=print):
         kwargs = dict(line_length=line_length, positions=positions,
