@@ -2,6 +2,7 @@ from typing import List
 
 import tensorflow as tf
 import h5py
+from tqdm import tqdm
 
 from suplearn_clone_detection.file_processor import FileProcessor
 from suplearn_clone_detection.config import Config
@@ -32,12 +33,14 @@ class Vectorizer(FileProcessor):
         by_lang = self._group_filenames(input_filenames)
         batch_size = self.options.get("batch_size") or self.config.trainer.batch_size
         with tf.Session() as sess, \
-            h5py.File(output, "w") as f:
+             h5py.File(output, "w") as f, \
+             tqdm(total=len(input_filenames)) as pbar:
             sess.run(tf.global_variables_initializer())
             for lang, lang_filenames in by_lang.items():
                 for filenames in util.in_batch(lang_filenames, batch_size):
                     for filename, vector in self.vectorize(filenames, lang, sess):
                         f.create_dataset(filename, data=vector)
+                    pbar.update(len(filenames))
 
     def _group_filenames(self, filenames):
         key = lambda filename: util.filename_language(filename, self.encoders)
