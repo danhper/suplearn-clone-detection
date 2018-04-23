@@ -35,6 +35,29 @@ def create_token_parser(base_subparsers):
         "-w", "--window-size", help="Window size to generate context", type=int, default=2)
 
 
+def make_file_processor_parser(parser, output_required=False):
+    parser.add_argument("file", help="file containing list of files to predict")
+    parser.add_argument(
+        "-b", "--files-base-dir", help="base directory for files in <file>")
+    parser.add_argument(
+        "-d", "--base-dir", help="base directory for model, config and output")
+    parser.add_argument(
+        "-c", "--config", help="config file for the model to evaluate", default="config.yml")
+    parser.add_argument(
+        "-m", "--model", help="path to the model to evaluate", default="model.h5")
+    parser.add_argument(
+        "--files-cache", help="file containing cached vectors for files")
+    parser.add_argument(
+        "--asts-path", help="file containing the JSON representation of the ASTs")
+    parser.add_argument(
+        "--filenames-path", help="file containing the filename path of the ASTs")
+    parser.add_argument(
+        "--batch-size", help="size of a batch", type=int)
+    parser.add_argument(
+        "-o", "--output",
+        help="file where to save the output", required=output_required)
+
+
 def create_parser():
     parser = argparse.ArgumentParser()
 
@@ -80,27 +103,12 @@ def create_parser():
 
 
     predict_parser = subparsers.add_parser("predict", help="Predict files")
-    predict_parser.add_argument("file", help="file containing list of files to predict")
-    predict_parser.add_argument(
-        "-b", "--files-base-dir", help="base directory for files in <file>")
-    predict_parser.add_argument(
-        "-d", "--base-dir", help="base directory for model, config and output")
-    predict_parser.add_argument(
-        "-c", "--config", help="config file for the model to evaluate", default="config.yml")
-    predict_parser.add_argument(
-        "-m", "--model", help="path to the model to evaluate", default="model.h5")
-    predict_parser.add_argument(
-        "--files-cache", help="file containing cached vectors for files")
-    predict_parser.add_argument(
-        "--asts-path", help="file containing the JSON representation of the ASTs")
-    predict_parser.add_argument(
-        "--filenames-path", help="file containing the filename path of the ASTs")
-    predict_parser.add_argument(
-        "--batch-size", help="size of a batch", type=int)
+    make_file_processor_parser(predict_parser)
     predict_parser.add_argument(
         "--max-size-diff", help="max size diff as a ratio between clones", type=float)
-    predict_parser.add_argument(
-        "-o", "--output", help="file where to save the output")
+
+    vectorize_parser = subparsers.add_parser("vectorize", help="Vectorize files")
+    make_file_processor_parser(vectorize_parser, output_required=True)
 
     show_results_parser = subparsers.add_parser("show-results", help="Show formatted results")
     show_results_parser.add_argument("filepath", help="file containing the results")
@@ -140,6 +148,8 @@ def run_command(args):
         commands.show_results(args.filepath, args.metric, args.output)
     elif args.command == "tokens":
         run_token_command(args)
+    elif args.command == "vectorize":
+        commands.vectorize(vars(args))
     else:
         app_parser.error("no command provided")
 

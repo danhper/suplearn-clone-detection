@@ -8,6 +8,7 @@ from suplearn_clone_detection.config import Config
 from suplearn_clone_detection.data_generator import DataGenerator
 from suplearn_clone_detection.evaluator import Evaluator
 from suplearn_clone_detection.predictor import Predictor
+from suplearn_clone_detection.vectorizer import Vectorizer
 from suplearn_clone_detection.results_printer import ResultsPrinter
 from suplearn_clone_detection.trainer import Trainer
 
@@ -76,6 +77,14 @@ def predict(options: Dict[str, str]):
     if options.get("output"):
         with open(options["output"], "w") as f:
             f.write(predictor.formatted_predictions)
+
+
+def vectorize(options: Dict[str, str]):
+    options = process_options(options)
+    vectorizer = Vectorizer.from_config(options["config"], options["model"], options)
+    with open(options["file"]) as f:
+        filenames = f.read().splitlines()
+    vectorizer.process(filenames, options["output"])
 
 
 def process_options(options: Dict[str, str]):
