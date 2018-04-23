@@ -111,3 +111,4 @@ venv.bak/
 tmp/
 
 /.vscode/
+.noseids

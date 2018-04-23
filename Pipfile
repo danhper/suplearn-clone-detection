@@ -9,6 +9,7 @@ name = "pypi"
 [dev-packages]
 ipython = "*"
 pylint = "*"
+nose = "*"
 
 [requires]
 python_version = "3.6"

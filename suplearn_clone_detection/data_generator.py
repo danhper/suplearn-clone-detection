@@ -9,7 +9,7 @@ from sklearn.utils.class_weight import compute_sample_weight
 
 from suplearn_clone_detection.config import GeneratorConfig, Config
 from suplearn_clone_detection.ast_loader import ASTLoader
-from suplearn_clone_detection import ast_transformer
+from suplearn_clone_detection import ast_transformer, util
 
 
 class DataInput:
@@ -92,11 +92,8 @@ class DataGenerator:
         self._split_data()
 
     def _filename_to_submission(self, filename):
-        _basename, ext = path.splitext(filename)
-        for known_lang in self.languages:
-            if known_lang.startswith(ext[1:]):
-                return {"file": filename, "language": known_lang}
-        raise ValueError("no language found for {0}".format(filename))
+        known_lang = util.filename_language(filename, self.languages)
+        return {"file": filename, "language": known_lang}
 
     def load_csv_data(self, csv_data: list):
         lang1_inputs, lang2_inputs, labels = [], [], []
