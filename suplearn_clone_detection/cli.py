@@ -109,6 +109,8 @@ def create_parser():
 
     vectorize_parser = subparsers.add_parser("vectorize", help="Vectorize files")
     make_file_processor_parser(vectorize_parser, output_required=True)
+    vectorize_parser.add_argument("--encoder-index", type=int,
+        help="The index of the encoder to use (only useful when both languages are the same)")
 
     show_results_parser = subparsers.add_parser("show-results", help="Show formatted results")
     show_results_parser.add_argument("filepath", help="file containing the results")
