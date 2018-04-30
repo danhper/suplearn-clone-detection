@@ -1,3 +1,4 @@
+from typing import List
 import copy
 from os import path
 
@@ -12,7 +13,7 @@ import keras.backend as K
 
 class ModelWrapper(Model):
     @property
-    def inner_models(self):
+    def inner_models(self) -> List[Model]:
         return [v for v in self.layers if isinstance(v, Model)]
 
     def save(self, filepath, overwrite=True, include_optimizer=True):
