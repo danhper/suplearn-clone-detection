@@ -45,10 +45,18 @@ print("\n".join([" ".join(v) for v in files[:10]]))
 predictor = Predictor.from_config(CONFIG_PATH, MODEL_PATH, {})
 
 #%%
-to_predict = files[100:500]
+to_predict = files[8:20]
 to_predict, input_data, _assumed_false = predictor._generate_vectors(to_predict)
 result = model.predict(input_data)
 result
+
+#%%
+
+sess = K.get_session()
+
+left = left_encoder(tf.constant(input_data[0]))
+right = right_encoder(tf.constant(input_data[1]))
+sess.run(distance_model([left, right]))
 
 #%%
 
@@ -59,13 +67,8 @@ def read_inputs(filename, files):
 left_inputs = read_inputs("java-dev-files-left.h5", [v[0] for v in to_predict])
 right_inputs = read_inputs("java-dev-files-right.h5", [v[1] for v in to_predict])
 
-#%%
-
-sess = K.get_session()
-
-left = left_encoder(tf.constant(input_data[0]))
-right = right_encoder(tf.constant(input_data[1]))
-sess.run(distance_model([left, right]))
+print(left_inputs[0], sess.run(left)[0])
+print(right_inputs[0], sess.run(right)[0])
 
 #%%
 
@@ -98,19 +101,11 @@ def find_nearest_neighbors(input_array, files, batch_size=512):
     results = np.array(results, dtype=[("filename", "S256"), ("distance", float)])
     return np.sort(results, order="distance")[::-1]
 
-#%%
-
-to_predict
-
-#%%
-
-SAMPLE = 3
-
 with h5py.File(path.join(ROOT_DIR, "java-dev-files-right.h5")) as f:
-    result = find_nearest_neighbors(left_inputs[SAMPLE], f)
+    result = find_nearest_neighbors(left_inputs[0], f)
 
-print("results for {0}".format(to_predict[SAMPLE][0]))
-[result for result in result if result[1] > 0.3]
+print("results for {0}".format(to_predict[0][0]))
+print(result[:10])
 
 
 # sess.run(tf.reshape(tf.tile(tf.constant(left_inputs[0]), [5]), (5, -1)))
