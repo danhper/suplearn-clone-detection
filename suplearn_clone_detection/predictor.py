@@ -18,6 +18,8 @@ class Predictor(FileProcessor):
         for i in tqdm(range(len(files) // batch_size + 1)):
             batch_files = files[i * batch_size:(i + 1) * batch_size]
             to_predict, input_data, assumed_false = self._generate_vectors(batch_files)
+            if not to_predict:
+                continue
             for file_pair in assumed_false:
                 predictions[file_pair] = 0.
             preds = self.model.predict(input_data, batch_size=batch_size)
@@ -41,6 +43,8 @@ class Predictor(FileProcessor):
         for (lang1_file, lang2_file) in files:
             lang1_ast, lang1_vec = self.get_file_vector(lang1_file, self.language_names[0])
             lang2_ast, lang2_vec = self.get_file_vector(lang2_file, self.language_names[1])
+            if not lang1_vec or not lang2_vec:
+                continue
             if self._below_size_threshold(lang1_ast, lang2_ast):
                 lang1_vectors.append(lang1_vec)
                 lang2_vectors.append(lang2_vec)
@@ -53,7 +57,8 @@ class Predictor(FileProcessor):
     def _save_predictions(self, files, predictions):
         ordered_predictions = []
         for pair in files:
-            ordered_predictions.append((pair, predictions[pair]))
+            if pair in predictions:
+                ordered_predictions.append((pair, predictions[pair]))
         self._predictions += ordered_predictions
         return ordered_predictions
 
