@@ -112,3 +112,4 @@ tmp/
 
 /.vscode/
 .noseids
+.merlin
