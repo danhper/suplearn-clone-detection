@@ -10,6 +10,7 @@ name = "pypi"
 ipython = "*"
 pylint = "*"
 nose = "*"
+rope = "*"
 
 [requires]
 python_version = "3.6"

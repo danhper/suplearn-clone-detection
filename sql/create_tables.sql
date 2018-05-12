@@ -23,7 +23,7 @@ CREATE VIEW IF NOT EXISTS submissions_stats AS
   language, language_code, source_length, exec_time, tokens_count, url
   FROM submissions;
 
-CREATE TABLE IF NOT EXISTS training_samples (
+CREATE TABLE IF NOT EXISTS samples (
   id INTEGER PRIMARY KEY,
 
   anchor_id INTEGER NOT NULL,
@@ -37,6 +37,7 @@ CREATE TABLE IF NOT EXISTS training_samples (
   FOREIGN KEY (negative_id) REFERENCES submissions (id)
 );
 
+CREATE INDEX IF NOT EXISTS set_name_idx ON training_samples (set_name);
 CREATE INDEX IF NOT EXISTS anchor_idx ON training_samples (anchor_id);
 CREATE INDEX IF NOT EXISTS positive_idx ON training_samples (positive_id);
 CREATE INDEX IF NOT EXISTS negative_idx ON training_samples (negative_id);

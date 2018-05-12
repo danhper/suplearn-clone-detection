@@ -95,6 +95,6 @@ class Config:
         self.trainer = TrainerConfig(config["trainer"])
 
     @classmethod
-    def from_file(cls, filepath):
+    def from_file(cls, filepath) -> "Config":
         with open(filepath) as f:
             return cls(yaml.load(f))

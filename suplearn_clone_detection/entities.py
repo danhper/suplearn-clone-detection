@@ -35,15 +35,16 @@ class Submission(Base):
         return "Submission(path=\"{0}\")".format(self.path)
 
 
-class TrainingSample(Base):
-    __tablename__ = "training_samples"
+class Sample(Base):
+    __tablename__ = "samples"
 
     id = Column(Integer, primary_key=True)
+    set_name = Column(String)
 
     anchor_id = Column(Integer, ForeignKey("submissions.id"))
     positive_id = Column(Integer, ForeignKey("submissions.id"))
     negative_id = Column(Integer, ForeignKey("submissions.id"))
 
-    anchor = relationship("Submission", foreign_keys=[anchor_id])
-    positive = relationship("Submission", foreign_keys=[positive_id])
-    negative = relationship("Submission", foreign_keys=[negative_id])
+    anchor: Submission = relationship("Submission", foreign_keys=[anchor_id])
+    positive: Submission = relationship("Submission", foreign_keys=[positive_id])
+    negative: Submission = relationship("Submission", foreign_keys=[negative_id])
