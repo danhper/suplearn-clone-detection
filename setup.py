@@ -13,5 +13,6 @@ setup(
         "scikit-learn",
         "tqdm",
         "matplotlib",
+        "sqlalchemy",
     ]
 )

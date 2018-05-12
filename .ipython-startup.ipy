@@ -2,12 +2,20 @@ import tensorflow as tf
 import numpy as np
 from keras.models import load_model
 
-from suplearn_clone_detection import ast_transformer, layers
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+
+from suplearn_clone_detection import ast_transformer, layers, entities
 from suplearn_clone_detection.config import Config
 from suplearn_clone_detection.ast_loader import ASTLoader
 
-
 config = Config.from_file("./config.yml")
+
+if config.generator.db_path:
+    engine = create_engine(config.generator.db_path, echo=True)
+    Session = sessionmaker(bind=engine)
+
+db_session = Session()
 
 ast_transformers = ast_transformer.create_all(config.model.languages)
 

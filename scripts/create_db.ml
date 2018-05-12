@@ -1,4 +1,4 @@
-#!/usr/bin/ocamlrun ocaml
+#!/usr/bin/env ocaml
 
 (* Installing dependencies:
   opam install core yojson sqlite3
@@ -60,6 +60,7 @@ let insert_stmt =
     contest_type,
     problem_id,
     problem_title,
+    filename,
     language,
     language_code,
     source_length,
@@ -67,7 +68,7 @@ let insert_stmt =
     tokens_count,
     ast,
     url
-  ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);"
+  ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);"
 
 
 let insert_submission stmt submission raw_ast =
@@ -85,19 +86,21 @@ let insert_submission stmt submission raw_ast =
   let ast = Yojson.Safe.from_string raw_ast |> to_list in
   let tokens_count = Int64.of_int (List.length ast) in
   let language_code = get_language_code (submission |> member "language" |> to_string) in
+  let filename = Filename.basename (submission |> member "file" |> to_string) in
 
   check_rc (Sqlite3.bind stmt 1 (int ~from_str:true "id"));
   check_rc (Sqlite3.bind stmt 2 (int "contest_id"));
   check_rc (Sqlite3.bind stmt 3 (str "contest_type"));
   check_rc (Sqlite3.bind stmt 4 (int "problem_id"));
   check_rc (Sqlite3.bind stmt 5 (str "problem_title"));
-  check_rc (Sqlite3.bind stmt 6 (str "language"));
-  check_rc (Sqlite3.bind stmt 7 (Sqlite3.Data.TEXT language_code));
-  check_rc (Sqlite3.bind stmt 8 (int "source_length"));
-  check_rc (Sqlite3.bind stmt 9 (int "exec_time"));
-  check_rc (Sqlite3.bind stmt 10 (Sqlite3.Data.INT tokens_count));
-  check_rc (Sqlite3.bind stmt 11 (Sqlite3.Data.TEXT raw_ast));
-  check_rc (Sqlite3.bind stmt 12 (str "submission_url"));
+  check_rc (Sqlite3.bind stmt 6 (Sqlite3.Data.TEXT filename));
+  check_rc (Sqlite3.bind stmt 7 (str "language"));
+  check_rc (Sqlite3.bind stmt 8 (Sqlite3.Data.TEXT language_code));
+  check_rc (Sqlite3.bind stmt 9 (int "source_length"));
+  check_rc (Sqlite3.bind stmt 10 (int "exec_time"));
+  check_rc (Sqlite3.bind stmt 11 (Sqlite3.Data.INT tokens_count));
+  check_rc (Sqlite3.bind stmt 12 (Sqlite3.Data.TEXT raw_ast));
+  check_rc (Sqlite3.bind stmt 13 (str "submission_url"));
 
   check_rc ~expected:Sqlite3.Rc.DONE (Sqlite3.step stmt);
   check_rc (Sqlite3.clear_bindings stmt);

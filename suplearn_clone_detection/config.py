@@ -67,6 +67,7 @@ class GeneratorConfig:
         self.submissions_path = path.expandvars(config["submissions_path"])
         self.asts_path = path.expandvars(config["asts_path"])
         self.filenames_path = None
+        self.db_path = path.expandvars(config.get("db_path", ""))
         if "filenames_path " in config:
             self.filenames_path = path.expandvars(config["filenames_path"])
         self.file_format = config.get("file_format", "multi_file")
