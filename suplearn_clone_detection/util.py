@@ -1,4 +1,5 @@
 from os import path
+from contextlib import contextmanager
 
 
 def filename_language(filename, available_languages):
@@ -36,3 +37,17 @@ def group_by(iterable, key):
         except StopIteration:
             break
     return grouped
+
+
+
+@contextmanager
+def session_scope(session_maker):
+    session = session_maker()
+    try:
+        yield session
+        session.commit()
+    except:
+        session.rollback()
+        raise
+    finally:
+        session.close()

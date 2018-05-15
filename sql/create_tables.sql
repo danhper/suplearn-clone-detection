@@ -37,7 +37,7 @@ CREATE TABLE IF NOT EXISTS samples (
   FOREIGN KEY (negative_id) REFERENCES submissions (id)
 );
 
-CREATE INDEX IF NOT EXISTS set_name_idx ON training_samples (set_name);
-CREATE INDEX IF NOT EXISTS anchor_idx ON training_samples (anchor_id);
-CREATE INDEX IF NOT EXISTS positive_idx ON training_samples (positive_id);
-CREATE INDEX IF NOT EXISTS negative_idx ON training_samples (negative_id);
+CREATE INDEX IF NOT EXISTS set_name_idx ON samples (set_name);
+CREATE INDEX IF NOT EXISTS anchor_idx ON samples (anchor_id);
+CREATE INDEX IF NOT EXISTS positive_idx ON samples (positive_id);
+CREATE INDEX IF NOT EXISTS negative_idx ON samples (negative_id);
