@@ -3,9 +3,13 @@ from typing import Dict
 from os import path
 import logging
 
+from sqlalchemy.orm import sessionmaker
+from sqlalchemy import create_engine
+
 from suplearn_clone_detection import ast_transformer
 from suplearn_clone_detection.config import Config
 from suplearn_clone_detection.data_generator import DataGenerator
+from suplearn_clone_detection.dataset_generator import DatasetGenerator
 from suplearn_clone_detection.evaluator import Evaluator
 from suplearn_clone_detection.predictor import Predictor
 from suplearn_clone_detection.vectorizer import Vectorizer
@@ -106,3 +110,11 @@ def process_options(options: Dict[str, str]):
 def show_results(filepath: str, metric: str, output: str):
     printer = ResultsPrinter(filepath)
     printer.show(metric, output)
+
+
+def generate_dataset(config_path: str):
+    config = Config.from_file(config_path)
+    engine = create_engine(config.generator.db_path)
+    session_maker = sessionmaker(bind=engine)
+    dataset_generator = DatasetGenerator(config, session_maker)
+    dataset_generator.create_samples()

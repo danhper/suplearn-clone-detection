@@ -10,25 +10,7 @@ TRANSFORMER_MAPPING = {
 }
 
 
-class BaseConfig:
-    def _recursive_hash(self, obj):
-        if isinstance(obj, list):
-            return [self._recursive_hash(o) for o in obj]
-        elif isinstance(obj, dict):
-            with_hashable_values = {k: self._recursive_hash(v) for k, v in obj.items()}
-            return sorted(with_hashable_values.items())
-        elif getattr(obj, "checksum", None):
-            return obj.checksum()
-        else:
-            return obj
-
-    def checksum(self):
-        h = hashlib.md5()
-        h.update(json.dumps(self._recursive_hash(vars(self))).encode("utf-8"))
-        return h.hexdigest()
-
-
-class LanguageConfig(BaseConfig):
+class LanguageConfig:
     def __init__(self, config):
         self.name = config["name"]
         self.vocabulary = path.expandvars(config["vocabulary"])
@@ -59,7 +41,7 @@ class LanguageConfig(BaseConfig):
         self._vocabulary_size = value
 
 
-class ModelConfig(BaseConfig):
+class ModelConfig:
     KNOWN_MERGE_MODES = [
         "simple",
         "bidistance",
@@ -83,7 +65,7 @@ class ModelConfig(BaseConfig):
         self.normalization_value = 100
 
 
-class GeneratorConfig(BaseConfig):
+class GeneratorConfig:
     def __init__(self, config):
         self.submissions_path = path.expandvars(config["submissions_path"])
         self.asts_path = path.expandvars(config["asts_path"])
@@ -101,7 +83,7 @@ class GeneratorConfig(BaseConfig):
         self.negative_sample_distance = config.get("negative_sample_distance", 0.2)
 
 
-class TrainerConfig(BaseConfig):
+class TrainerConfig:
     def __init__(self, config):
         self.epochs = config["epochs"]
         self.batch_size = config.get("batch_size", 128)
@@ -109,11 +91,24 @@ class TrainerConfig(BaseConfig):
         self.tensorboard_logs = config.get("tensorboard_logs", True)
 
 
-class Config(BaseConfig):
+class Config:
     def __init__(self, config):
         self.model = ModelConfig(config["model"])
         self.generator = GeneratorConfig(config["generator"])
         self.trainer = TrainerConfig(config["trainer"])
+
+    @property
+    def data_generation_config(self):
+        return dict(
+            languages=[v.name for v in self.model.languages],
+            negative_sample_distance=self.generator.negative_sample_distance,
+            split_ratio=self.generator.split_ratio,
+        )
+
+    def data_generation_checksum(self):
+        h = hashlib.md5()
+        h.update(json.dumps(self.data_generation_config, sort_keys=True).encode("utf-8"))
+        return h.hexdigest()
 
     @classmethod
     def from_file(cls, filepath) -> "Config":
