@@ -1,15 +1,19 @@
-import configparser
 from tests.base import TestCase
-import yaml
 
-from suplearn_clone_detection.config import ModelConfig
+from suplearn_clone_detection.config import Config
 
 class ConfigTest(TestCase):
     @classmethod
+    def load_config(cls):
+        return Config.from_file(cls.fixture_path("config.yml"))
+
+    @classmethod
     def setUpClass(cls):
-        with open(cls.fixture_path("config.yml")) as f:
-            cls.config = yaml.load(f)
+        cls.config = cls.load_config()
 
     def test_config(self):
-        config = ModelConfig(self.config["model"])
+        config = self.config.model
         self.assertEqual(config.dense_layers, [64, 64])
+
+    def test_hash(self):
+        self.assertEqual(self.config.checksum(), self.load_config().checksum())

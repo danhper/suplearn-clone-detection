@@ -31,6 +31,7 @@ CREATE TABLE IF NOT EXISTS samples (
   negative_id INTEGER,
 
   set_name STRING NOT NULL,
+  config_checksum STRING NOT NULL,
 
   FOREIGN KEY (anchor_id) REFERENCES submissions (id),
   FOREIGN KEY (positive_id) REFERENCES submissions (id),
@@ -41,3 +42,4 @@ CREATE INDEX IF NOT EXISTS set_name_idx ON samples (set_name);
 CREATE INDEX IF NOT EXISTS anchor_idx ON samples (anchor_id);
 CREATE INDEX IF NOT EXISTS positive_idx ON samples (positive_id);
 CREATE INDEX IF NOT EXISTS negative_idx ON samples (negative_id);
+CREATE INDEX IF NOT EXISTS config_checksum_idx ON samples (config_checksum);

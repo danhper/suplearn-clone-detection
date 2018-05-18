@@ -1,13 +1,34 @@
 from os import path
+import json
+import hashlib
 
 import yaml
+
 
 TRANSFORMER_MAPPING = {
     "FlatVectorIndexASTTransformer": "DFSTransformer",
 }
 
 
-class LanguageConfig:
+class BaseConfig:
+    def _recursive_hash(self, obj):
+        if isinstance(obj, list):
+            return [self._recursive_hash(o) for o in obj]
+        elif isinstance(obj, dict):
+            with_hashable_values = {k: self._recursive_hash(v) for k, v in obj.items()}
+            return sorted(with_hashable_values.items())
+        elif getattr(obj, "checksum", None):
+            return obj.checksum()
+        else:
+            return obj
+
+    def checksum(self):
+        h = hashlib.md5()
+        h.update(json.dumps(self._recursive_hash(vars(self))).encode("utf-8"))
+        return h.hexdigest()
+
+
+class LanguageConfig(BaseConfig):
     def __init__(self, config):
         self.name = config["name"]
         self.vocabulary = path.expandvars(config["vocabulary"])
@@ -38,7 +59,7 @@ class LanguageConfig:
         self._vocabulary_size = value
 
 
-class ModelConfig:
+class ModelConfig(BaseConfig):
     KNOWN_MERGE_MODES = [
         "simple",
         "bidistance",
@@ -62,7 +83,7 @@ class ModelConfig:
         self.normalization_value = 100
 
 
-class GeneratorConfig:
+class GeneratorConfig(BaseConfig):
     def __init__(self, config):
         self.submissions_path = path.expandvars(config["submissions_path"])
         self.asts_path = path.expandvars(config["asts_path"])
@@ -80,7 +101,7 @@ class GeneratorConfig:
         self.negative_sample_distance = config.get("negative_sample_distance", 0.2)
 
 
-class TrainerConfig:
+class TrainerConfig(BaseConfig):
     def __init__(self, config):
         self.epochs = config["epochs"]
         self.batch_size = config.get("batch_size", 128)
@@ -88,7 +109,7 @@ class TrainerConfig:
         self.tensorboard_logs = config.get("tensorboard_logs", True)
 
 
-class Config:
+class Config(BaseConfig):
     def __init__(self, config):
         self.model = ModelConfig(config["model"])
         self.generator = GeneratorConfig(config["generator"])

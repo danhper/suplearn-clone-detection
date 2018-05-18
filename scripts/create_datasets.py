@@ -1,8 +1,9 @@
 from typing import List, Dict
 import random
+import logging
 
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker, session
+from sqlalchemy.orm import sessionmaker
 
 from suplearn_clone_detection import entities, util
 from suplearn_clone_detection.config import Config
@@ -13,7 +14,8 @@ class DatasetGenerator:
     def __init__(self, config: Config, session_maker):
         self.config = config
         self.session_maker = session_maker
-        self.session = None  # type: session.Session
+        self.session = None
+        self.config_checksum = config.checksum()
 
     def get_positive(self, submission: entities.Submission, lang: str) -> entities.Submission:
         conditions = dict(
@@ -58,17 +60,17 @@ class DatasetGenerator:
 
         training_count = int(len(submissions) * training_ratio)
         dev_count = int(len(submissions) * dev_ratio)
-        return {
-            "training": submissions[:training_count],
-            "dev": submissions[training_count:training_count+dev_count],
-            "test": submissions[training_count+dev_count:],
-        }
+        return dict(
+            training=submissions[:training_count],
+            dev=submissions[training_count:training_count+dev_count],
+            test=submissions[training_count+dev_count:],
+        )
 
 
     def create_set_samples(self, set_name: str, negative_lang: str,
                            dataset: List[entities.Submission]):
         samples = []
-        for submission in dataset:
+        for i, submission in enumerate(dataset):
             positive = self.get_positive(submission, submission.language_code)
             if not positive:
                 continue
@@ -77,7 +79,8 @@ class DatasetGenerator:
                 anchor=submission,
                 positive=positive,
                 positive_id=positive.id,
-                set_name=set_name
+                set_name=set_name,
+                config_checksum=self.config_checksum,
             )
             negative = self.get_negative(sample, negative_lang)
             if not negative:
@@ -85,9 +88,12 @@ class DatasetGenerator:
             sample.negative = negative
             sample.negative_id = negative.id
             samples.append(sample)
+            if i % 1000 == 0:
+                logging.info("%s-%s pairs progress - %s - %s/%s",
+                            submission.language_code, negative_lang, set_name, i, len(dataset))
         return samples
 
-    def create_lang_samples(self, positive_lang: str, negative_lang: str):
+    def create_lang_samples(self, positive_lang: str, negative_lang: str) -> entities.Sample:
         datasets = self.load_submissions(positive_lang)
 
         samples = []
@@ -106,13 +112,12 @@ class DatasetGenerator:
 
 
 def main():
+    logging.basicConfig(level=logging.INFO)
     config = Config.from_file("./config.yml")
     engine = create_engine(config.generator.db_path)
     session_maker = sessionmaker(bind=engine)
     dataset_generator = DatasetGenerator(config, session_maker)
     dataset_generator.create_samples()
-
-    # create_samples(config)
 
 
 if __name__ == '__main__':
