@@ -16,4 +16,4 @@ class ConfigTest(TestCase):
         self.assertEqual(config.dense_layers, [64, 64])
 
     def test_hash(self):
-        self.assertEqual(self.config.checksum(), self.load_config().checksum())
+        self.assertEqual(self.config.data_generation_checksum(), self.load_config().data_generation_checksum())
