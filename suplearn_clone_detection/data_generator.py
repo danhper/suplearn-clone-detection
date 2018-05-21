@@ -131,7 +131,7 @@ class DataGenerator:
         self.submissions_by_language = {lang: [] for lang in self.languages}
         self.submissions_by_problem = {}
         for submission in self.submissions:
-            key = (submission["contest_id"], submission["problem_id"])
+            key = (submission["contest_type"], submission["contest_id"], submission["problem_id"])
             current_value = self.submissions_by_problem.get(key, [])
             current_value.append(submission)
             self.submissions_by_problem[key] = current_value
