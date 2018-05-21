@@ -39,11 +39,11 @@ class DataGeneratorTest(TestCase):
                                         get_ast_len(submisisons[i - 1]))
 
     def test_group_by_problem(self):
-        self.assertEqual(set([(1, 1), (1, 0), (5, 0)]),
+        self.assertEqual(set([("r", 1, 1), ("r", 1, 0), ("b", 5, 0)]),
                          self.generator.submissions_by_problem.keys())
-        self.assertEqual(len(self.generator.submissions_by_problem[(1, 1)]), 3)
-        self.assertEqual(len(self.generator.submissions_by_problem[(1, 0)]), 1)
-        self.assertEqual(len(self.generator.submissions_by_problem[(5, 0)]), 1)
+        self.assertEqual(len(self.generator.submissions_by_problem[("r", 1, 1)]), 3)
+        self.assertEqual(len(self.generator.submissions_by_problem[("r", 1, 0)]), 1)
+        self.assertEqual(len(self.generator.submissions_by_problem[("b", 5, 0)]), 1)
 
     def test_len(self):
         self.assertEqual(len(self.iterator), 4)
