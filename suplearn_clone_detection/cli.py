@@ -2,7 +2,10 @@ import sys
 import argparse
 import logging
 
-from suplearn_clone_detection import commands
+import tensorflow as tf
+import keras.backend as K
+
+from suplearn_clone_detection import commands, settings
 from suplearn_clone_detection.token_based import commands as token_commands
 
 
@@ -157,6 +160,10 @@ def run_command(args):
 
 
 def run():
+    gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=settings.TF_GPU_MAX_MEMORY_USAGE)
+    sess = tf.Session(config=tf.ConfigProto(gpu_options=gpu_options))
+    K.set_session(sess)
+
     args = app_parser.parse_args()
 
     log_level = logging.INFO if args.quiet else logging.DEBUG
@@ -164,7 +171,8 @@ def run():
                         format="%(asctime)-15s %(levelname)s %(message)s")
 
     if args.debug:
-        return run_command(args)
+        run_command(args)
+        return
 
     try:
         run_command(args)
