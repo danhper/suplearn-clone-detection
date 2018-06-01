@@ -31,6 +31,10 @@ class Submission(Base):
             self.problem_id,
             self.filename)
 
+    @property
+    def group_key(self):
+        return (self.contest_type, self.contest_id, self.problem_id)
+
     def __repr__(self):
         return "Submission(path=\"{0}\")".format(self.path)
 
