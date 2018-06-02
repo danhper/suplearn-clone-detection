@@ -67,10 +67,11 @@ class DatasetGenerator:
         lang2_grouped_dataset = self.group_submissions(lang2_dataset)
         lang2_sorted_dataset = self.sort_dataset(lang2_dataset)
         for i, submission in enumerate(lang1_dataset):
-            positive = random.choice(lang2_grouped_dataset[submission.group_key])
-            if not positive:
+            positive_samples = lang2_grouped_dataset.get(submission.group_key)
+            if not positive_samples:
                 continue
-            tok_count = positive.tokens_count
+            positive_sample = random.choice(positive_samples)
+            tok_count = positive_sample.tokens_count
             tokens_diff = int(self.config.generator.negative_sample_distance * tok_count)
             left_index = self.find_submission_index(lang2_sorted_dataset, tok_count - tokens_diff)
             right_index = self.find_submission_index(lang2_sorted_dataset,
@@ -82,8 +83,8 @@ class DatasetGenerator:
             sample = entities.Sample(
                 anchor_id=submission.id,
                 anchor=submission,
-                positive=positive,
-                positive_id=positive.id,
+                positive=positive_sample,
+                positive_id=positive_sample.id,
                 negative=negative_sample,
                 negative_id=negative_sample.id,
                 set_name=set_name,
