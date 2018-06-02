@@ -1,5 +1,6 @@
 from os import path
 from contextlib import contextmanager
+import functools
 
 
 def filename_language(filename, available_languages):
@@ -39,15 +40,25 @@ def group_by(iterable, key):
     return grouped
 
 
-
 @contextmanager
 def session_scope(session_maker):
     session = session_maker()
     try:
         yield session
         session.commit()
-    except:
+    except Exception:
         session.rollback()
         raise
     finally:
         session.close()
+
+
+def memoize(f):
+    memoized = {}
+
+    def wrapper(*args, **kwargs):
+        key = (tuple(args), tuple(kwargs.items()))
+        if key not in memoized:
+            memoized[key] = f(*args)
+        return memoized[key]
+    return functools.update_wrapper(wrapper, f)
