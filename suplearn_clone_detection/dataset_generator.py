@@ -1,4 +1,4 @@
-from typing import List, Dict, Tuple
+from typing import List, Dict, Tuple, Optional
 import random
 import logging
 
@@ -60,13 +60,27 @@ class DatasetGenerator:
                 right = middle
         return left
 
-    def submission_with_tokens_count_around(self, sorted_submissions: List[entities.Submission],
-                                            tokens_count: int) -> List[entities.Submission]:
+    def select_negative_candidates(
+            self, sorted_submissions: List[entities.Submission],
+            positive_sample: entities.Submission,
+            min_candidates: Optional[int] = None) -> List[entities.Submission]:
+        tokens_count = positive_sample.tokens_count
         tokens_diff = int(self.config.generator.negative_sample_distance * tokens_count)
         left_index = self.find_submission_index(sorted_submissions, tokens_count - tokens_diff)
         right_index = self.find_submission_index(sorted_submissions,
                                                  tokens_count + tokens_diff, rightmost=True)
-        return sorted_submissions[left_index:right_index]
+        candidates = sorted_submissions[left_index:right_index]
+        filtered_candidates = [c for c in candidates if c.group_key != positive_sample.group_key]
+
+        if not min_candidates:
+            return filtered_candidates
+
+        while len(filtered_candidates) < min_candidates:
+            new_candidate = random.choice(sorted_submissions)
+            if new_candidate.group_key != positive_sample.group_key and \
+               new_candidate not in filtered_candidates:
+                filtered_candidates.append(new_candidate)
+        return filtered_candidates
 
     def create_set_samples(self, set_name: str,
                            lang1_dataset: List[entities.Submission],
@@ -79,8 +93,8 @@ class DatasetGenerator:
             if not positive_samples:
                 continue
             positive_sample = random.choice(positive_samples)
-            negative_samples = self.submission_with_tokens_count_around(
-                lang2_sorted_dataset, positive_sample.tokens_count)
+            negative_samples = self.select_negative_candidates(
+                lang2_sorted_dataset, positive_sample)
             if not negative_samples:
                 continue
             negative_sample = random.choice(negative_samples)
