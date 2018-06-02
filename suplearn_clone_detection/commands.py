@@ -9,7 +9,7 @@ from sqlalchemy import create_engine
 from suplearn_clone_detection import ast_transformer
 from suplearn_clone_detection.config import Config
 from suplearn_clone_detection.data_generator import DataGenerator
-from suplearn_clone_detection.dataset_generator import DatasetGenerator
+from suplearn_clone_detection.dataset.generator import DatasetGenerator
 from suplearn_clone_detection.evaluator import Evaluator
 from suplearn_clone_detection.predictor import Predictor
 from suplearn_clone_detection.vectorizer import Vectorizer
