@@ -1,12 +1,9 @@
 from typing import List, Dict, Tuple
-import time
-import functools
 import random
 import logging
 
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker, Session, load_only
-# from sqlalchemy.sql.expression import func
+from sqlalchemy.orm import sessionmaker, Session
 
 from suplearn_clone_detection import entities, util
 from suplearn_clone_detection.config import Config
@@ -33,7 +30,8 @@ class DatasetGenerator:
             test=submissions[training_count+dev_count:],
         )
 
-    def group_submissions(self, submissions: List[entities.Submission]) \
+    @staticmethod
+    def group_submissions(submissions: List[entities.Submission]) \
             -> Dict[Tuple[str, int, int], entities.Submission]:
         result = {}
         for submission in submissions:
@@ -41,12 +39,15 @@ class DatasetGenerator:
             result[submission.group_key].append(submission)
         return result
 
-    def sort_dataset(self, submissions: List[entities.Submission]) \
+    @staticmethod
+    def sort_dataset(submissions: List[entities.Submission]) \
             -> Tuple[List[entities.Submission], Dict[int, int]]:
         sorted_submissions = sorted(submissions, key=lambda x: x.tokens_count)
         return sorted_submissions
 
-    def find_submission_index(self, submissions: List[entities.Submission], tokens_count: int, rightmost=False) -> int:
+    @staticmethod
+    def find_submission_index(submissions: List[entities.Submission],
+                              tokens_count: int, rightmost=False) -> int:
         left = 0
         right = len(submissions)
         while left < right:
@@ -57,8 +58,15 @@ class DatasetGenerator:
                 left = middle + 1
             else:
                 right = middle
-        return left - 1 if rightmost else left
+        return left
 
+    def submission_with_tokens_count_around(self, sorted_submissions: List[entities.Submission],
+                                            tokens_count: int) -> List[entities.Submission]:
+        tokens_diff = int(self.config.generator.negative_sample_distance * tokens_count)
+        left_index = self.find_submission_index(sorted_submissions, tokens_count - tokens_diff)
+        right_index = self.find_submission_index(sorted_submissions,
+                                                 tokens_count + tokens_diff, rightmost=True)
+        return sorted_submissions[left_index:right_index]
 
     def create_set_samples(self, set_name: str,
                            lang1_dataset: List[entities.Submission],
@@ -71,12 +79,8 @@ class DatasetGenerator:
             if not positive_samples:
                 continue
             positive_sample = random.choice(positive_samples)
-            tok_count = positive_sample.tokens_count
-            tokens_diff = int(self.config.generator.negative_sample_distance * tok_count)
-            left_index = self.find_submission_index(lang2_sorted_dataset, tok_count - tokens_diff)
-            right_index = self.find_submission_index(lang2_sorted_dataset,
-                                                     tok_count + tokens_diff, rightmost=True)
-            negative_samples = lang2_sorted_dataset[left_index:right_index]
+            negative_samples = self.submission_with_tokens_count_around(
+                lang2_sorted_dataset, positive_sample.tokens_count)
             if not negative_samples:
                 continue
             negative_sample = random.choice(negative_samples)
@@ -99,7 +103,6 @@ class DatasetGenerator:
     def create_lang_samples(self,
                             lang1_datasets: Dict[str, List[entities.Submission]],
                             lang2_datasets: Dict[str, List[entities.Submission]]) -> entities.Sample:
-        # datasets = self.load_submissions(sess, positive_lang)
         samples = []
         for set_name, dataset in lang1_datasets.items():
             samples.extend(self.create_set_samples(set_name, dataset, lang2_datasets[set_name]))
@@ -109,7 +112,7 @@ class DatasetGenerator:
         q = sess.query(entities.Sample).filter_by(config_checksum=self.config_checksum)
         if q.first():
             raise ValueError("samples already exists for checksum '{0}'. run "
-                             "'DELETE FROM samples WHERE config_checksum='{0}' "
+                             "\"DELETE FROM samples WHERE config_checksum='{0}'\" "
                              "if you want to remove them".format(self.config_checksum))
 
     def create_samples(self):
