@@ -46,13 +46,13 @@ class SuplearnSequence(Sequence):
         return X, y
 
     def get_positive_pairs(self, samples: List[entities.Sample]):
-        lang1 = np.array([self.get_ast(sample.anchor) for sample in samples])
-        lang2 = np.array([self.get_ast(sample.positive) for sample in samples])
+        lang1 = [self.get_ast(sample.anchor) for sample in samples]
+        lang2 = [self.get_ast(sample.positive) for sample in samples]
         return lang1, lang2
 
     def get_negative_pairs(self, samples: List[entities.Sample]):
-        lang1 = np.array([self.get_ast(sample.anchor) for sample in samples])
-        lang2 = np.array([self.get_ast(sample.negative) for sample in samples])
+        lang1 = [self.get_ast(sample.anchor) for sample in samples]
+        lang2 = [self.get_ast(sample.negative) for sample in samples]
         return lang1, lang2
 
     @memoize
