@@ -5,6 +5,7 @@ import random
 import logging
 
 import numpy as np
+import tensorflow as tf
 from keras.engine import Model
 from keras.utils import Sequence
 from keras.preprocessing.sequence import pad_sequences
@@ -87,9 +88,10 @@ class SuplearnSequence(Sequence):
 
 
 class TrainingSequence(SuplearnSequence):
-    def __init__(self, model: Model, config: Config) -> None:
+    def __init__(self, model: Model, graph: tf.Graph, config: Config) -> None:
         super(TrainingSequence, self).__init__(config)
         self.model = model
+        self.graph = graph
 
     def get_negative_pairs(self, samples: List[entities.Sample]) \
             -> Tuple[List[List[int]], List[List[int]]]:
@@ -104,7 +106,9 @@ class TrainingSequence(SuplearnSequence):
         lang1_input = pad_sequences([ast for ast in anchor_asts for _ in range(count_per_anchor)])
         lang2_input = pad_sequences([ast for ast in candidate_asts])
 
-        predictions = self.model.predict([lang1_input, lang2_input], batch_size=len(lang1_input))
+        with self.graph.as_default():
+            predictions = self.model.predict([lang1_input, lang2_input],
+                                             batch_size=len(lang1_input))
         negative_asts = self._collect_negative_asts(anchors, candidates,
                                                     candidate_asts, predictions)
 

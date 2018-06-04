@@ -3,6 +3,7 @@ from os import path
 from datetime import datetime
 import logging
 
+import tensorflow as tf
 from keras.callbacks import TensorBoard
 
 import yaml
@@ -26,7 +27,8 @@ class Trainer:
 
     def initialize(self):
         self.model = create_model(self.config.model)
-        self.training_data = TrainingSequence(self.model, self.config)
+        graph = tf.get_default_graph()
+        self.training_data = TrainingSequence(self.model, graph, self.config)
         self.dev_data = DevSequence(self.config)
         os.makedirs(self.output_dir)
         with open(path.join(self.output_dir, "config.yml"), "w") as f:
