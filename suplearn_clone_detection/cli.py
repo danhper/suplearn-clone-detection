@@ -86,6 +86,12 @@ def create_parser():
         "--data-type", choices=["dev", "test"], default="dev",
         help="the type of data to generate")
 
+    generate_data_parser = subparsers.add_parser(
+        "generate-dataset", help="Generate dataset for training/evaluating model")
+    generate_data_parser.add_argument(
+        "-c", "--config", help="config file path", default="config.yml")
+
+
     evaluate_parser = subparsers.add_parser("evaluate", help="Evaluate the model")
     evaluate_parser.add_argument(
         "-d", "--base-dir", help="base directory for model, config and output")
@@ -149,6 +155,8 @@ def run_command(args):
         commands.predict(vars(args))
     elif args.command == "generate-data":
         commands.generate_data(args.config, args.output, args.data_type)
+    elif args.command == "generate-dataset":
+        commands.generate_dataset(args.config)
     elif args.command == "show-results":
         commands.show_results(args.filepath, args.metric, args.output)
     elif args.command == "tokens":

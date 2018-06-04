@@ -1,6 +1,9 @@
 from os import path
+import json
+import hashlib
 
 import yaml
+
 
 TRANSFORMER_MAPPING = {
     "FlatVectorIndexASTTransformer": "DFSTransformer",
@@ -67,6 +70,7 @@ class GeneratorConfig:
         self.submissions_path = path.expandvars(config["submissions_path"])
         self.asts_path = path.expandvars(config["asts_path"])
         self.filenames_path = None
+        self.db_path = path.expandvars(config.get("db_path", ""))
         if "filenames_path " in config:
             self.filenames_path = path.expandvars(config["filenames_path"])
         self.file_format = config.get("file_format", "multi_file")
@@ -75,6 +79,8 @@ class GeneratorConfig:
         self.shuffle_before_epoch = config.get("shuffle_before_epoch", True)
         self.split_ratio = config.get("split_ratio", [0.8, 0.1, 0.1])
         self.negative_samples = config.get("negative_samples", 1)
+        self.negative_sample_candidates = config.get("negative_sample_candidates", 8)
+        self.samples_per_submission = config.get("samples_per_submission", 1)
         self.class_weights = config.get("class_weights")
         self.negative_sample_distance = config.get("negative_sample_distance", 0.2)
 
@@ -93,7 +99,21 @@ class Config:
         self.generator = GeneratorConfig(config["generator"])
         self.trainer = TrainerConfig(config["trainer"])
 
+    @property
+    def data_generation_config(self):
+        return dict(
+            languages=[v.name for v in self.model.languages],
+            negative_sample_distance=self.generator.negative_sample_distance,
+            samples_per_submission=self.generator.samples_per_submission,
+            split_ratio=self.generator.split_ratio,
+        )
+
+    def data_generation_checksum(self):
+        h = hashlib.md5()
+        h.update(json.dumps(self.data_generation_config, sort_keys=True).encode("utf-8"))
+        return h.hexdigest()
+
     @classmethod
-    def from_file(cls, filepath):
+    def from_file(cls, filepath) -> "Config":
         with open(filepath) as f:
             return cls(yaml.load(f))

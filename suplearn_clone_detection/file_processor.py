@@ -58,7 +58,6 @@ class FileProcessor:
         return json.loads(res.stdout)
 
     @classmethod
-    def from_config(cls, config_path: str, model_path: str, options: dict):
-        config = Config.from_file(config_path)
+    def from_config(cls, config: Config, model_path: str, options: dict):
         model = load_model(model_path, custom_objects=custom_objects)
         return cls(config, model, options)

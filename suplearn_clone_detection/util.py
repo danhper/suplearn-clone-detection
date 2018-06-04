@@ -1,4 +1,5 @@
 from os import path
+import functools
 
 
 def filename_language(filename, available_languages):
@@ -36,3 +37,14 @@ def group_by(iterable, key):
         except StopIteration:
             break
     return grouped
+
+
+def memoize(f):
+    memoized = {}
+
+    def wrapper(*args, **kwargs):
+        key = (tuple(args), tuple(kwargs.items()))
+        if key not in memoized:
+            memoized[key] = f(*args)
+        return memoized[key]
+    return functools.update_wrapper(wrapper, f)

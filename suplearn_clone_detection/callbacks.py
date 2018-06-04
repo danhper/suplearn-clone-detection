@@ -4,14 +4,14 @@ from suplearn_clone_detection.evaluator import Evaluator
 
 
 class ModelResultsTracker:
-    def __init__(self, data_generator, model, comparator=None):
-        self.data_generator = data_generator
+    def __init__(self, data, model, comparator=None):
+        self.data = data
         self.model = model
         self._results_cache = {}
         self.best_epoch = -1
         self.best_results = None
         self.comparator = comparator
-        self.evaluator = Evaluator(self.model, self.data_generator)
+        self.evaluator = Evaluator(self.model, self.data)
         if self.comparator is None:
             self.comparator = self.default_comparator
 

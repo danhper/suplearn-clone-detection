@@ -3,9 +3,10 @@ from typing import Dict
 from os import path
 import logging
 
-from suplearn_clone_detection import ast_transformer
+from suplearn_clone_detection import ast_transformer, database
 from suplearn_clone_detection.config import Config
 from suplearn_clone_detection.data_generator import DataGenerator
+from suplearn_clone_detection.dataset.generator import DatasetGenerator
 from suplearn_clone_detection.evaluator import Evaluator
 from suplearn_clone_detection.predictor import Predictor
 from suplearn_clone_detection.vectorizer import Vectorizer
@@ -30,7 +31,7 @@ def train(config_path: str, quiet: bool = False):
 
 
 def generate_data(config_path: str, output: str, data_type: str = "dev"):
-    config = Config.from_file(config_path)
+    config = load_and_process_config(config_path)
     transformers = ast_transformer.create_all(config.model.languages)
     data_generator = DataGenerator(config.generator, transformers)
     data_it = data_generator.make_iterator(data_type=data_type)
@@ -44,12 +45,13 @@ def generate_data(config_path: str, output: str, data_type: str = "dev"):
 
 def evaluate(options: Dict[str, str]):
     options = process_options(options)
+    config = load_and_process_config(options["config"])
 
     if options.get("output", "") is None:
         val = "results-{0}.yml".format(options["data_type"])
         options["output"] = path.join(options.get("base_dir", ""), val)
 
-    evaluator = Evaluator.from_config(options["config"], options["model"])
+    evaluator = Evaluator.from_config(config, options["model"])
     results = evaluator.evaluate(data_path=options["data_path"],
                                  data_type=options["data_type"],
                                  output=options["output"],
@@ -61,6 +63,7 @@ def evaluate(options: Dict[str, str]):
 
 def predict(options: Dict[str, str]):
     options = process_options(options)
+    config = load_and_process_config(options["config"])
     with open(options["file"], "r") as f:
         files_base_dir = options.get("files_base_dir") or ""
         files = []
@@ -68,7 +71,7 @@ def predict(options: Dict[str, str]):
             pair = line.strip().split("," if "," in line else " ")[:2]
             files.append(tuple(path.join(files_base_dir, filename) for filename in pair))
 
-    predictor = Predictor.from_config(options["config"], options["model"], options)
+    predictor = Predictor.from_config(config, options["model"], options)
     predictor.predict(files)
 
     if not options.get("quiet", False):
@@ -81,7 +84,8 @@ def predict(options: Dict[str, str]):
 
 def vectorize(options: Dict[str, str]):
     options = process_options(options)
-    vectorizer = Vectorizer.from_config(options["config"], options["model"], options)
+    config = load_and_process_config(options["config"])
+    vectorizer = Vectorizer.from_config(config, options["model"], options)
     with open(options["file"]) as f:
         filenames = f.read().splitlines()
     vectorizer.process(filenames, options["output"])
@@ -106,3 +110,16 @@ def process_options(options: Dict[str, str]):
 def show_results(filepath: str, metric: str, output: str):
     printer = ResultsPrinter(filepath)
     printer.show(metric, output)
+
+
+def generate_dataset(config_path: str):
+    config = load_and_process_config(config_path)
+    dataset_generator = DatasetGenerator(config)
+    dataset_generator.create_samples()
+
+
+def load_and_process_config(config_path: str) -> Config:
+    config = Config.from_file(config_path)
+    if config.generator.db_path:
+        database.bind_db(config.generator.db_path)
+    return config
