@@ -27,13 +27,19 @@ class SuplearnSequence(Sequence):
     def dataset_name(self):
         raise NotImplementedError()
 
-    def __enter__(self):
+    def open(self):
         self._session = self.session_maker()
+
+    def close(self):
+        self._session.close()
+        self._session = None
+
+    def __enter__(self):
+        self.open()
         return self
 
     def __exit__(self, _exc_type, _exc_val, _exc_tb):
-        self._session.close()
-        self._session = None
+        self.close()
 
     def __getitem__(self, index):
         samples = self.get_samples(index)
@@ -78,10 +84,12 @@ class SuplearnSequence(Sequence):
                    .filter_by(**conditions)
 
     def __len__(self):
-        return math.ceil(self.count_samples() * 2 // self.batch_size)
+        return math.ceil(self.count_samples() * 2 / self.batch_size)
 
     @memoize
     def get_samples(self, index):
+        if index >= len(self):
+            raise IndexError("sequence index out of range")
         samples_per_batch = self.batch_size // 2
         offset = samples_per_batch * index
         options = [joinedload(entities.Sample.anchor),
@@ -96,7 +104,7 @@ class SuplearnSequence(Sequence):
     @property
     def session(self) -> Session:
         if not self._session:
-            raise ValueError("should be used inside 'with'")
+            raise ValueError("'open' has not been called on this sequence")
         return self._session
 
 
