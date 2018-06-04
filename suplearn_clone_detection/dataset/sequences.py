@@ -24,7 +24,7 @@ class SuplearnSequence(Sequence):
         self._session = None
 
     @property
-    def set_name(self):
+    def dataset_name(self):
         raise NotImplementedError()
 
     def __enter__(self):
@@ -71,7 +71,7 @@ class SuplearnSequence(Sequence):
 
     @property
     def db_query(self):
-        conditions = dict(set_name=self.set_name,
+        conditions = dict(dataset_name=self.dataset_name,
                           config_checksum=self.config_checksum)
         return self.session \
                    .query(entities.Sample) \
@@ -110,17 +110,17 @@ class TrainingSequence(SuplearnSequence):
         return super(TrainingSequence, self).get_negative_pairs(samples)
 
     @property
-    def set_name(self):
+    def dataset_name(self):
         return "training"
 
 
 class DevSequence(SuplearnSequence):
     @property
-    def set_name(self):
+    def dataset_name(self):
         return "dev"
 
 
 class TestSequence(SuplearnSequence):
     @property
-    def set_name(self):
+    def dataset_name(self):
         return "test"

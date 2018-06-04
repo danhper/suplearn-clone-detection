@@ -43,7 +43,7 @@ class Sample(Base):
     __tablename__ = "samples"
 
     id: int = Column(Integer, primary_key=True)
-    set_name: str = Column(String)
+    dataset_name: str = Column(String)
     config_checksum: str = Column(String)
 
     anchor_id: int = Column(Integer, ForeignKey("submissions.id"))
@@ -56,5 +56,5 @@ class Sample(Base):
 
     def __repr__(self):
         return "Sample(anchor={0}, positive={1}, negative={2})" \
-               "set_name=\"{3}\"".format(self.anchor, self.positive,
-                                         self.negative, self.set_name)
+               "dataset_name=\"{3}\"".format(self.anchor, self.positive,
+                                         self.negative, self.dataset_name)

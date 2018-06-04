@@ -31,7 +31,7 @@ class DatasetGenerator:
             test=submissions[training_count+dev_count:],
         )
 
-    def _create_sample(self, set_name: str, submission: entities.Submission,
+    def _create_sample(self, dataset_name: str, submission: entities.Submission,
                        sorted_set: List[entities.Submission],
                        positive_samples: List[entities.Submission]):
         if not positive_samples:
@@ -51,11 +51,11 @@ class DatasetGenerator:
             positive_id=positive_sample.id,
             negative=negative_sample,
             negative_id=negative_sample.id,
-            set_name=set_name,
+            dataset_name=dataset_name,
             config_checksum=self.config_checksum,
         ), positive_sample_idx
 
-    def create_set_samples(self, set_name: str,
+    def create_set_samples(self, dataset_name: str,
                            lang1_dataset: List[entities.Submission],
                            lang2_dataset: List[entities.Submission]):
         samples = []
@@ -64,7 +64,7 @@ class DatasetGenerator:
         for i, submission in enumerate(lang1_dataset):
             positive_submissions = lang2_grouped_dataset.get(submission.group_key).copy()
             for _ in range(self.config.generator.samples_per_submission):
-                sample, positive_idx = self._create_sample(set_name, submission,
+                sample, positive_idx = self._create_sample(dataset_name, submission,
                                                            lang2_sorted_dataset,
                                                            positive_submissions)
                 if not sample:
@@ -74,15 +74,15 @@ class DatasetGenerator:
             if i % 1000 == 0 and sample:
                 logging.info("%s-%s pairs progress - %s - %s/%s",
                              submission.language_code, sample.negative.language_code,
-                             set_name, i, len(lang1_dataset))
+                             dataset_name, i, len(lang1_dataset))
         return samples
 
     def create_lang_samples(
             self, lang1_datasets: Dict[str, List[entities.Submission]],
             lang2_datasets: Dict[str, List[entities.Submission]]) -> entities.Sample:
         samples = []
-        for set_name, dataset in lang1_datasets.items():
-            samples.extend(self.create_set_samples(set_name, dataset, lang2_datasets[set_name]))
+        for dataset_name, dataset in lang1_datasets.items():
+            samples.extend(self.create_set_samples(dataset_name, dataset, lang2_datasets[dataset_name]))
         return samples
 
     def check_existing_samples(self, sess: Session):
