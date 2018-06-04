@@ -7,7 +7,7 @@ import numpy as np
 from keras.utils import Sequence
 from keras.preprocessing.sequence import pad_sequences
 
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 
 
 from suplearn_clone_detection import entities, ast_transformer
@@ -21,7 +21,8 @@ class SuplearnSequence(Sequence):
         self.set_name = set_name
         self.session_maker = session_maker
         self.config_checksum = self.config.data_generation_checksum()
-        self.ast_transformers = ast_transformer.create_all(config.languages)
+        transformers = ast_transformer.create_all(config.model.languages)
+        self.ast_transformers = {tr.language: tr for tr in transformers}
         self._session = None
         self._samples_count = 0
 
@@ -31,6 +32,7 @@ class SuplearnSequence(Sequence):
 
     def __exit__(self, _exc_type, _exc_val, _exc_tb):
         self._session.close()
+        self._session = None
 
     def __getitem__(self, index):
         samples = self.get_samples(index)
@@ -70,7 +72,7 @@ class SuplearnSequence(Sequence):
                           config_checksum=self.config_checksum)
         return self.session \
                    .query(entities.Sample) \
-                   .filter_by(conditions)
+                   .filter_by(**conditions)
 
     def __len__(self):
         return math.ceil(self.count_samples() * 2 // self.batch_size)
@@ -79,7 +81,10 @@ class SuplearnSequence(Sequence):
     def get_samples(self, index):
         samples_per_batch = self.batch_size // 2
         offset = samples_per_batch * index
-        return self.db_query.offset(offset).limit(samples_per_batch).all()
+        options = [joinedload(entities.Sample.anchor),
+                   joinedload(entities.Sample.positive),
+                   joinedload(entities.Sample.negative)]
+        return self.db_query.options(*options).offset(offset).limit(samples_per_batch).all()
 
     @memoize
     def count_samples(self):
