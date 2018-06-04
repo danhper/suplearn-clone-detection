@@ -39,12 +39,24 @@ def group_by(iterable, key):
     return grouped
 
 
-def memoize(f):
-    memoized = {}
+def memoize(make_key):
+    def wrapped(f):
+        memoized = {}
 
-    def wrapper(*args, **kwargs):
-        key = (tuple(args), tuple(kwargs.items()))
-        if key not in memoized:
-            memoized[key] = f(*args)
-        return memoized[key]
-    return functools.update_wrapper(wrapper, f)
+        def wrapper(*args, **kwargs):
+            key = make_key(*args, **kwargs)
+            if key not in memoized:
+                memoized[key] = f(*args)
+            return memoized[key]
+
+        return functools.update_wrapper(wrapper, f)
+
+    if not callable(make_key) or not hasattr(make_key, "__name__"):
+        raise ValueError("@memoize argument should be a lambda")
+
+    if make_key.__name__ == "<lambda>":
+        return wrapped
+    else:
+        f = make_key
+        make_key = lambda *args, **kwargs: (tuple(args), (tuple(kwargs.items())))
+        return wrapped(f)

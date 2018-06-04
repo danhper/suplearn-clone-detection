@@ -53,7 +53,7 @@ class SuplearnSequence(Sequence):
         lang2 = [self.get_ast(getattr(sample, second_elem_key)) for sample in samples]
         return lang1, lang2
 
-    @memoize
+    @memoize(lambda submission: submission.id)
     def get_ast(self, submission: entities.Submission):
         transformer = self.ast_transformers[submission.language_code]
         return transformer.transform_ast(json.loads(submission.ast))
@@ -71,7 +71,6 @@ class SuplearnSequence(Sequence):
     def __len__(self):
         return math.ceil(self.count_samples() * 2 / self.batch_size)
 
-    @memoize
     def get_samples(self, index):
         if index >= len(self):
             raise IndexError("sequence index out of range")
