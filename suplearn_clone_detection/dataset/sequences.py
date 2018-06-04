@@ -9,7 +9,7 @@ from keras.engine import Model
 from keras.utils import Sequence
 from keras.preprocessing.sequence import pad_sequences
 
-from sqlalchemy.orm import Session, joinedload
+from sqlalchemy.orm import joinedload
 
 from suplearn_clone_detection import entities, ast_transformer, util
 from suplearn_clone_detection.util import memoize
@@ -17,31 +17,15 @@ from suplearn_clone_detection.config import Config
 
 
 class SuplearnSequence(Sequence):
-    def __init__(self, config: Config, session_maker) -> None:
+    def __init__(self, config: Config) -> None:
         self.config = config
-        self.session_maker = session_maker
         self.config_checksum = self.config.data_generation_checksum()
         transformers = ast_transformer.create_all(config.model.languages)
         self.ast_transformers = {tr.language: tr for tr in transformers}
-        self._session = None
 
     @property
     def dataset_name(self):
         raise NotImplementedError()
-
-    def open(self):
-        self._session = self.session_maker()
-
-    def close(self):
-        self._session.close()
-        self._session = None
-
-    def __enter__(self):
-        self.open()
-        return self
-
-    def __exit__(self, _exc_type, _exc_val, _exc_tb):
-        self.close()
 
     def __getitem__(self, index):
         samples = self.get_samples(index)
@@ -81,9 +65,7 @@ class SuplearnSequence(Sequence):
     def db_query(self):
         conditions = dict(dataset_name=self.dataset_name,
                           config_checksum=self.config_checksum)
-        return self.session \
-                   .query(entities.Sample) \
-                   .filter_by(**conditions)
+        return entities.Sample.query.filter_by(**conditions)
 
     def __len__(self):
         return math.ceil(self.count_samples() * 2 / self.batch_size)
@@ -103,16 +85,10 @@ class SuplearnSequence(Sequence):
     def count_samples(self):
         return self.db_query.count()
 
-    @property
-    def session(self) -> Session:
-        if not self._session:
-            raise ValueError("'open' has not been called on this sequence")
-        return self._session
-
 
 class TrainingSequence(SuplearnSequence):
-    def __init__(self, model: Model, config: Config, session_maker) -> None:
-        super(TrainingSequence, self).__init__(config, session_maker)
+    def __init__(self, model: Model, config: Config) -> None:
+        super(TrainingSequence, self).__init__(config)
         self.model = model
 
     def get_negative_pairs(self, samples: List[entities.Sample]) \
@@ -159,7 +135,7 @@ class TrainingSequence(SuplearnSequence):
 
     @memoize
     def candidates_pool(self, language_code: str):
-        return self.session.query(entities.Submission).filter_by(language_code=language_code).all()
+        return entities.Submission.query.filter_by(language_code=language_code).all()
 
     @property
     def dataset_name(self):

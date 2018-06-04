@@ -1,24 +1,21 @@
-from typing import List, Dict, Tuple
+from typing import List, Dict
 import random
 import logging
 
-from sqlalchemy.orm import Session
-
 from suplearn_clone_detection import entities
 from suplearn_clone_detection.dataset import util
-from suplearn_clone_detection.util import session_scope
 from suplearn_clone_detection.config import Config
+from suplearn_clone_detection.database import Session
 
 
 class DatasetGenerator:
-    def __init__(self, config: Config, session_maker):
+    def __init__(self, config: Config):
         self.config = config
-        self.session_maker = session_maker
         self.config_checksum = self.config.data_generation_checksum()
 
-    def load_submissions(self, sess: Session, lang: str) -> Dict[str, List[entities.Submission]]:
+    def load_submissions(self, lang: str) -> Dict[str, List[entities.Submission]]:
         training_ratio, dev_ratio, _test_ratio = self.config.generator.split_ratio
-        submissions = sess.query(entities.Submission) \
+        submissions = entities.Submission.query \
                           .filter(entities.Submission.language_code == lang) \
                           .all()
         random.shuffle(submissions)
@@ -85,24 +82,24 @@ class DatasetGenerator:
             samples.extend(self.create_set_samples(dataset_name, dataset, lang2_datasets[dataset_name]))
         return samples
 
-    def check_existing_samples(self, sess: Session):
-        q = sess.query(entities.Sample).filter_by(config_checksum=self.config_checksum)
+    def check_existing_samples(self):
+        q = entities.Sample.query.filter_by(config_checksum=self.config_checksum)
         if q.first():
             raise ValueError("samples already exists for checksum '{0}'. run "
                              "\"DELETE FROM samples WHERE config_checksum='{0}'\" "
                              "if you want to remove them".format(self.config_checksum))
 
     def create_samples(self):
-        with session_scope(self.session_maker) as sess:
-            self.check_existing_samples(sess)
-            languages = [v.name for v in self.config.model.languages]
-            lang1_samples = self.load_submissions(sess, languages[0])
-            if languages[0] != languages[1]:
-                lang2_samples = self.load_submissions(sess, languages[1])
-            else:
-                lang2_samples = lang1_samples
-            samples = self.create_lang_samples(lang1_samples, lang2_samples)
-            if languages[0] != languages[1]:
-                samples.extend(self.create_lang_samples(lang2_samples, lang1_samples))
-            sess.bulk_save_objects(samples)
-            return len(samples)
+        self.check_existing_samples()
+        languages = [v.name for v in self.config.model.languages]
+        lang1_samples = self.load_submissions(languages[0])
+        if languages[0] != languages[1]:
+            lang2_samples = self.load_submissions(languages[1])
+        else:
+            lang2_samples = lang1_samples
+        samples = self.create_lang_samples(lang1_samples, lang2_samples)
+        if languages[0] != languages[1]:
+            samples.extend(self.create_lang_samples(lang2_samples, lang1_samples))
+        Session.bulk_save_objects(samples)
+        Session.commit()
+        return len(samples)

@@ -1,5 +1,4 @@
 from os import path
-from contextlib import contextmanager
 import functools
 
 
@@ -38,19 +37,6 @@ def group_by(iterable, key):
         except StopIteration:
             break
     return grouped
-
-
-@contextmanager
-def session_scope(session_maker):
-    session = session_maker()
-    try:
-        yield session
-        session.commit()
-    except Exception:
-        session.rollback()
-        raise
-    finally:
-        session.close()
 
 
 def memoize(f):

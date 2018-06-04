@@ -2,12 +2,10 @@ import json
 from os import path
 from typing import List
 
-from sqlalchemy.orm import sessionmaker
-from sqlalchemy import create_engine
-
 from suplearn_clone_detection.config import Config
 from suplearn_clone_detection.ast_loader import ASTLoader
-from suplearn_clone_detection import entities, util
+from suplearn_clone_detection import entities, database
+from suplearn_clone_detection.database import Session
 
 
 SQL_PATH = path.realpath(path.join(path.dirname(path.dirname(__file__)), "sql"))
@@ -15,12 +13,10 @@ KNOWN_LANGUAGES = ["java", "python"]
 
 
 class SubmissionCreator:
-    def __init__(self, config: Config, engine, known_languages: List[str] = None):
+    def __init__(self, config: Config, known_languages: List[str] = None):
         if known_languages is None:
             known_languages = KNOWN_LANGUAGES
         self.config = config
-        self.engine = engine
-        self.session_maker = sessionmaker(bind=engine)
         self.known_languages = known_languages
         self.ast_loader = ASTLoader(
             config.generator.asts_path,
@@ -60,21 +56,23 @@ class SubmissionCreator:
                     submissions.append(self.make_submission(submission_obj))
         return submissions
 
-    def create_db(self):
-        with self.engine.begin() as conn, \
-             open(path.join(SQL_PATH, "create_tables.sql")) as f:
-            conn.connection.connection.executescript(f.read())
+    @staticmethod
+    def create_db():
+        sqlite_conn = Session.connection().connection.connection
+        with open(path.join(SQL_PATH, "create_tables.sql")) as f:
+            sqlite_conn.executescript(f.read())
+            Session.commit()
 
     def create_submission(self):
         submissions = self.load_submissions()
-        with util.session_scope(self.session_maker) as sess:
-            sess.bulk_save_objects(submissions)
+        Session.bulk_save_objects(submissions)
+        Session.commit()
 
 
 def main():
     config = Config.from_file("./config.yml")
-    engine = create_engine(config.generator.db_path)
-    creator = SubmissionCreator(config, engine)
+    database.bind_db(config.generator.db_path)
+    creator = SubmissionCreator(config)
     creator.create_db()
     creator.create_submission()
 
