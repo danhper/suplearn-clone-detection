@@ -53,7 +53,7 @@ class SuplearnSequence(Sequence):
         lang2 = [self.get_ast(getattr(sample, second_elem_key)) for sample in samples]
         return lang1, lang2
 
-    @memoize(lambda submission: submission.id)
+    @memoize(lambda self, submission: (self, submission.id))
     def get_ast(self, submission: entities.Submission):
         transformer = self.ast_transformers[submission.language_code]
         return transformer.transform_ast(json.loads(submission.ast))
