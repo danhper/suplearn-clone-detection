@@ -1,6 +1,8 @@
-from typing import List, Tuple
+from typing import List, Tuple, Iterable
 import math
 import json
+import random
+import logging
 
 import numpy as np
 from keras.engine import Model
@@ -9,7 +11,7 @@ from keras.preprocessing.sequence import pad_sequences
 
 from sqlalchemy.orm import Session, joinedload
 
-from suplearn_clone_detection import entities, ast_transformer
+from suplearn_clone_detection import entities, ast_transformer, util
 from suplearn_clone_detection.util import memoize
 from suplearn_clone_detection.config import Config
 
@@ -45,12 +47,12 @@ class SuplearnSequence(Sequence):
         samples = self.get_samples(index)
         lang1_positive, lang2_positive = self.get_positive_pairs(samples)
         lang1_negative, lang2_negative = self.get_negative_pairs(samples)
-        lang1_samples = pad_sequences(lang1_positive + lang1_negative)
-        lang2_samples = pad_sequences(lang2_positive + lang2_negative)
+        lang1_input = pad_sequences(lang1_positive + lang1_negative)
+        lang2_input = pad_sequences(lang2_positive + lang2_negative)
         labels = np.hstack([np.ones(len(lang1_positive), dtype=np.int32),
                             np.zeros(len(lang1_negative), dtype=np.int32)])
         shuffled_index = np.random.permutation(len(labels))
-        X = [lang1_samples[shuffled_index], lang2_samples[shuffled_index]]
+        X = [lang1_input[shuffled_index], lang2_input[shuffled_index]]
         y = labels[shuffled_index]
         return X, y
 
@@ -113,9 +115,51 @@ class TrainingSequence(SuplearnSequence):
         super(TrainingSequence, self).__init__(config, session_maker)
         self.model = model
 
-    #TODO: override get_negative_pairs
-    def get_negative_pairs(self, samples: List[entities.Sample]) -> Tuple[List[int], List[int]]:
-        return super(TrainingSequence, self).get_negative_pairs(samples)
+    def get_negative_pairs(self, samples: List[entities.Sample]) \
+            -> Tuple[List[List[int]], List[List[int]]]:
+        count_per_anchor = self.config.generator.negative_sample_candidates
+        anchors = [sample.anchor for sample in samples]
+        anchor_asts = [self.get_ast(anchor) for anchor in anchors]
+        candidates = random.sample(self.candidates_pool(samples[0].negative.language_code),
+                                   count_per_anchor * len(samples))
+        candidate_asts = [self.get_ast(submission) for submission in candidates]
+
+        # input lenghts: len(samples) * count_per_anchor
+        lang1_input = pad_sequences([ast for ast in anchor_asts for _ in range(count_per_anchor)])
+        lang2_input = pad_sequences([ast for ast in candidate_asts])
+
+        predictions = self.model.predict([lang1_input, lang2_input], batch_size=len(lang1_input))
+        negative_asts = self._collect_negative_asts(anchors, candidates,
+                                                    candidate_asts, predictions)
+
+        return anchor_asts, negative_asts
+
+    def _collect_negative_asts(self, anchors: List[entities.Submission],
+                               candidates: List[entities.Submission],
+                               candidate_asts: List[List[int]],
+                               predictions: Iterable[int]) -> List[List[int]]:
+        count_per_anchor = self.config.generator.negative_sample_candidates
+        negative_asts = []
+        for i, sample_predictions in enumerate(util.in_batch(predictions, count_per_anchor)):
+            negative_ast = None
+            max_prediction = -1
+            base_index = i * count_per_anchor
+            for j, prediction in enumerate(sample_predictions):
+                if prediction > max_prediction and \
+                        candidates[base_index + j].group_key != anchors[i].group_key:
+                    negative_ast = candidate_asts[base_index + j]
+                    max_prediction = prediction
+
+            if not negative_ast:
+                logging.warning("could not find a valid negative sample")
+                negative_ast = candidates[base_index]
+
+            negative_asts.append(negative_ast)
+        return negative_asts
+
+    @memoize
+    def candidates_pool(self, language_code: str):
+        return self.session.query(entities.Submission).filter_by(language_code=language_code).all()
 
     @property
     def dataset_name(self):

@@ -53,7 +53,7 @@ def create_lstm(output_dimension: int,
 
 def create_encoder(lang_config: LanguageConfig, index: int):
     transformer = ast_transformer.create(lang_config)
-    ast_input = Input(shape=(transformer.total_input_length,),
+    ast_input = Input(shape=(None,),
                       dtype="int32", name="input_{0}_{1}".format(lang_config.name, index))
 
     x = make_embeddings(lang_config, index)(ast_input)
