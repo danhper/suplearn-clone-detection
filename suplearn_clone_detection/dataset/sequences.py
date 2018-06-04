@@ -1,14 +1,13 @@
-from typing import List
+from typing import List, Tuple
 import math
 import json
 
 import numpy as np
-# from keras.engine import Model
+from keras.engine import Model
 from keras.utils import Sequence
 from keras.preprocessing.sequence import pad_sequences
 
 from sqlalchemy.orm import Session, joinedload
-
 
 from suplearn_clone_detection import entities, ast_transformer
 from suplearn_clone_detection.util import memoize
@@ -16,15 +15,17 @@ from suplearn_clone_detection.config import Config
 
 
 class SuplearnSequence(Sequence):
-    def __init__(self, set_name: str, config: Config, session_maker) -> None:
+    def __init__(self, config: Config, session_maker) -> None:
         self.config = config
-        self.set_name = set_name
         self.session_maker = session_maker
         self.config_checksum = self.config.data_generation_checksum()
         transformers = ast_transformer.create_all(config.model.languages)
         self.ast_transformers = {tr.language: tr for tr in transformers}
         self._session = None
-        self._samples_count = 0
+
+    @property
+    def set_name(self):
+        raise NotImplementedError()
 
     def __enter__(self):
         self._session = self.session_maker()
@@ -47,14 +48,16 @@ class SuplearnSequence(Sequence):
         y = labels[shuffled_index]
         return X, y
 
-    def get_positive_pairs(self, samples: List[entities.Sample]):
-        lang1 = [self.get_ast(sample.anchor) for sample in samples]
-        lang2 = [self.get_ast(sample.positive) for sample in samples]
-        return lang1, lang2
+    def get_positive_pairs(self, samples: List[entities.Sample]) -> Tuple[List[int], List[int]]:
+        return self._get_pairs(samples, "positive")
 
-    def get_negative_pairs(self, samples: List[entities.Sample]):
+    def get_negative_pairs(self, samples: List[entities.Sample]) -> Tuple[List[int], List[int]]:
+        return self._get_pairs(samples, "negative")
+
+    def _get_pairs(self, samples: List[entities.Sample],
+                   second_elem_key: str) -> Tuple[List[int], List[int]]:
         lang1 = [self.get_ast(sample.anchor) for sample in samples]
-        lang2 = [self.get_ast(sample.negative) for sample in samples]
+        lang2 = [self.get_ast(getattr(sample, second_elem_key)) for sample in samples]
         return lang1, lang2
 
     @memoize
@@ -95,3 +98,29 @@ class SuplearnSequence(Sequence):
         if not self._session:
             raise ValueError("should be used inside 'with'")
         return self._session
+
+
+class TrainingSequence(SuplearnSequence):
+    def __init__(self, model: Model, config: Config, session_maker) -> None:
+        super(TrainingSequence, self).__init__(config, session_maker)
+        self.model = model
+
+    #TODO: override get_negative_pairs
+    def get_negative_pairs(self, samples: List[entities.Sample]) -> Tuple[List[int], List[int]]:
+        return super(TrainingSequence, self).get_negative_pairs(samples)
+
+    @property
+    def set_name(self):
+        return "training"
+
+
+class DevSequence(SuplearnSequence):
+    @property
+    def set_name(self):
+        return "dev"
+
+
+class TestSequence(SuplearnSequence):
+    @property
+    def set_name(self):
+        return "test"
