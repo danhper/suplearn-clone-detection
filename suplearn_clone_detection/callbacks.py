@@ -18,7 +18,7 @@ class ModelResultsTracker:
     def compute_results(self, epoch):
         if epoch in self._results_cache:
             return self._results_cache[epoch]
-        results = self.evaluator.evaluate(data_type="dev", reuse_inputs=True)
+        results = self.evaluator.evaluate(self.data)
         if self.best_results is None or self.comparator(results, self.best_results):
             self.best_epoch = epoch
             self.best_results = results

@@ -3,7 +3,7 @@ from typing import Dict
 from os import path
 import logging
 
-from suplearn_clone_detection import ast_transformer, database
+from suplearn_clone_detection import ast_transformer, database, dataset
 from suplearn_clone_detection.config import Config
 from suplearn_clone_detection.data_generator import DataGenerator
 from suplearn_clone_detection.dataset.generator import DatasetGenerator
@@ -22,9 +22,10 @@ def train(config_path: str, quiet: bool = False):
         trainer.model.summary()
     trainer.train()
 
-    evaluator = Evaluator.from_trainer(trainer)
+    data = dataset.get(trainer.config, "dev")
+    evaluator = Evaluator(trainer.model)
     results_file = path.join(trainer.output_dir, "results-dev.yml")
-    results = evaluator.evaluate(output=results_file)
+    results = evaluator.evaluate(data, output=results_file)
     if not quiet:
         evaluator.output_results(results)
     return results
@@ -51,9 +52,9 @@ def evaluate(options: Dict[str, str]):
         val = "results-{0}.yml".format(options["data_type"])
         options["output"] = path.join(options.get("base_dir", ""), val)
 
-    evaluator = Evaluator.from_config(config, options["model"])
-    results = evaluator.evaluate(data_path=options["data_path"],
-                                 data_type=options["data_type"],
+    evaluator = Evaluator(options["model"])
+    data = dataset.get(config, options["data_type"])
+    results = evaluator.evaluate(data,
                                  output=options["output"],
                                  overwrite=options.get("overwrite", False))
     if not options.get("quiet", False):

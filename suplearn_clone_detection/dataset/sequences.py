@@ -23,6 +23,7 @@ class SuplearnSequence(Sequence):
         self.config_checksum = self.config.data_generation_checksum()
         transformers = ast_transformer.create_all(config.model.languages)
         self.ast_transformers = {tr.language: tr for tr in transformers}
+        self.shuffle = False
 
     @property
     def dataset_name(self):
@@ -34,12 +35,22 @@ class SuplearnSequence(Sequence):
         lang1_negative, lang2_negative = self.get_negative_pairs(samples)
         lang1_input = pad_sequences(lang1_positive + lang1_negative)
         lang2_input = pad_sequences(lang2_positive + lang2_negative)
-        labels = np.hstack([np.ones(len(lang1_positive), dtype=np.int32),
-                            np.zeros(len(lang1_negative), dtype=np.int32)])
-        shuffled_index = np.random.permutation(len(labels))
-        X = [lang1_input[shuffled_index], lang2_input[shuffled_index]]
-        y = labels[shuffled_index]
+        y = np.hstack([np.ones(len(lang1_positive), dtype=np.int32),
+                       np.zeros(len(lang1_negative), dtype=np.int32)])
+        if self.shuffle:
+            shuffled_index = np.random.permutation(len(y))
+            X = [lang1_input[shuffled_index], lang2_input[shuffled_index]]
+            y = y[shuffled_index]
+        else:
+            X = [lang1_input, lang2_input]
         return X, y
+
+    def get_labels(self):
+        y = np.array([])
+        for index in range(len(self)):
+            _, batch_y = self[index]
+            y = np.hstack([y, batch_y])
+        return y
 
     def get_positive_pairs(self, samples: List[entities.Sample]) -> Tuple[List[int], List[int]]:
         return self._get_pairs(samples, "positive")
@@ -91,6 +102,7 @@ class TrainingSequence(SuplearnSequence):
         super(TrainingSequence, self).__init__(config)
         self.model = model
         self.graph = graph
+        self.shuffle = True
 
     def get_negative_pairs(self, samples: List[entities.Sample]) \
             -> Tuple[List[List[int]], List[List[int]]]:
