@@ -3,6 +3,7 @@ import math
 import json
 import random
 import logging
+from contextlib import contextmanager
 
 import numpy as np
 import tensorflow as tf
@@ -12,6 +13,7 @@ from keras.preprocessing.sequence import pad_sequences
 
 from sqlalchemy.orm import joinedload
 
+from suplearn_clone_detection.database import get_session
 from suplearn_clone_detection import entities, ast_transformer, util
 from suplearn_clone_detection.util import memoize
 from suplearn_clone_detection.config import Config
@@ -73,15 +75,17 @@ class SuplearnSequence(Sequence):
     def batch_size(self):
         return self.config.trainer.batch_size
 
-    @property
+    @contextmanager
     def db_query(self):
         conditions = dict(dataset_name=self.dataset_name,
                           config_checksum=self.config_checksum)
-        return entities.Sample.query.filter_by(**conditions)
+        with get_session() as sess:
+            yield sess.query(entities.Sample).filter_by(**conditions)
 
     def __len__(self):
         return math.ceil(self.count_samples() * 2 / self.batch_size)
 
+    @memoize
     def get_samples(self, index):
         if index >= len(self):
             raise IndexError("sequence index out of range")
@@ -90,11 +94,13 @@ class SuplearnSequence(Sequence):
         options = [joinedload(entities.Sample.anchor),
                    joinedload(entities.Sample.positive),
                    joinedload(entities.Sample.negative)]
-        return self.db_query.options(*options).offset(offset).limit(samples_per_batch).all()
+        with self.db_query() as query:
+            return query.options(*options).offset(offset).limit(samples_per_batch).all()
 
     @memoize
     def count_samples(self):
-        return self.db_query.count()
+        with self.db_query() as query:
+            return query.count()
 
 
 class TrainingSequence(SuplearnSequence):
@@ -113,7 +119,7 @@ class TrainingSequence(SuplearnSequence):
                                    count_per_anchor * len(samples))
         candidate_asts = [self.get_ast(submission) for submission in candidates]
 
-        # input lenghts: len(samples) * count_per_anchor
+        # input lengths: len(samples) * count_per_anchor
         lang1_input = pad_sequences([ast for ast in anchor_asts for _ in range(count_per_anchor)])
         lang2_input = pad_sequences([ast for ast in candidate_asts])
 
@@ -148,9 +154,13 @@ class TrainingSequence(SuplearnSequence):
             negative_asts.append(negative_ast)
         return negative_asts
 
+    @staticmethod
     @memoize
-    def candidates_pool(self, language_code: str):
-        return entities.Submission.query.filter_by(language_code=language_code).all()
+    def candidates_pool(language_code: str):
+        with get_session() as sess:
+            return sess.query(entities.Submission) \
+                       .filter_by(language_code=language_code) \
+                       .all()
 
     @property
     def dataset_name(self):

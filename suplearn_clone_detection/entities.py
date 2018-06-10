@@ -48,11 +48,17 @@ class Sample(Base):
     positive_id: int = Column(Integer, ForeignKey("submissions.id"))
     negative_id: int = Column(Integer, ForeignKey("submissions.id"))
 
-    anchor: Submission = relationship("Submission", foreign_keys=[anchor_id])
-    positive: Submission = relationship("Submission", foreign_keys=[positive_id])
-    negative: Submission = relationship("Submission", foreign_keys=[negative_id])
+    anchor: Submission = relationship("Submission",
+                                      foreign_keys=[anchor_id],
+                                      cascade="expunge")
+    positive: Submission = relationship("Submission",
+                                        foreign_keys=[positive_id],
+                                        cascade="expunge")
+    negative: Submission = relationship("Submission",
+                                        foreign_keys=[negative_id],
+                                        cascade="expunge")
 
     def __repr__(self):
-        return "Sample(anchor={0}, positive={1}, negative={2})" \
-               "dataset_name=\"{3}\"".format(self.anchor, self.positive,
+        return "Sample(anchor={0}, positive={1}, negative={2}, " \
+               "dataset_name=\"{3}\")".format(self.anchor, self.positive,
                                          self.negative, self.dataset_name)

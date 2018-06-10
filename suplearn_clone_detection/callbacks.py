@@ -11,7 +11,7 @@ class ModelResultsTracker:
         self.best_epoch = -1
         self.best_results = None
         self.comparator = comparator
-        self.evaluator = Evaluator(self.model, self.data)
+        self.evaluator = Evaluator(self.model)
         if self.comparator is None:
             self.comparator = self.default_comparator
 
