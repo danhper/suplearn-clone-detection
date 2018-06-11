@@ -18,6 +18,7 @@ class LanguageConfig:
         self.embeddings = path.expandvars(config.get("embeddings", ""))
         self.vocabulary_offset = config.get("vocabulary_offset", 0)
         self.input_length = config.get("input_length")
+        self.max_length = config.get("max_length")
         self.embeddings_dimension = config["embeddings_dimension"]
         if "output_dimension" in config:
             self.output_dimensions = [config["output_dimension"]]

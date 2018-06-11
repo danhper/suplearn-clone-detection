@@ -11,12 +11,16 @@ from keras.engine import Model
 from keras.utils import Sequence
 from keras.preprocessing.sequence import pad_sequences
 
-from sqlalchemy.orm import joinedload
+from sqlalchemy.orm import joinedload, aliased
 
 from suplearn_clone_detection.database import get_session
 from suplearn_clone_detection import entities, ast_transformer, util
 from suplearn_clone_detection.util import memoize
 from suplearn_clone_detection.config import Config
+
+
+Positive = aliased(entities.Submission)
+Anchor = aliased(entities.Submission)
 
 
 class SuplearnSequence(Sequence):
@@ -110,6 +114,18 @@ class TrainingSequence(SuplearnSequence):
         self.graph = graph
         self.shuffle = True
 
+    @contextmanager
+    def db_query(self):
+        lang1_config, lang2_config = self.config.model.languages
+        with super(TrainingSequence, self).db_query() as query:
+            if lang1_config.max_length:
+                query = query.join(Anchor, entities.Sample.anchor) \
+                             .filter(Anchor.tokens_count <= lang1_config.max_length)
+            if lang2_config.max_length:
+                query = query.join(Positive, entities.Sample.positive) \
+                             .filter(Positive.tokens_count <= lang2_config.max_length)
+            yield query
+
     def get_negative_pairs(self, samples: List[entities.Sample]) \
             -> Tuple[List[List[int]], List[List[int]]]:
         count_per_anchor = self.config.generator.negative_sample_candidates
@@ -154,13 +170,16 @@ class TrainingSequence(SuplearnSequence):
             negative_asts.append(negative_ast)
         return negative_asts
 
-    @staticmethod
     @memoize
-    def candidates_pool(language_code: str):
+    def candidates_pool(self, language_code: str):
         with get_session() as sess:
-            return sess.query(entities.Submission) \
-                       .filter_by(language_code=language_code) \
-                       .all()
+            query = sess.query(entities.Submission) \
+                        .filter_by(language_code=language_code)
+            max_length = self.config.model.languages[1].max_length
+            if max_length:
+                query = query.filter(entities.Submission.max_length <= max_length)
+            return query.all()
+
 
     @property
     def dataset_name(self):
