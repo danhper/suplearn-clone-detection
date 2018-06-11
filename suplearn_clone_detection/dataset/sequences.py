@@ -177,7 +177,7 @@ class TrainingSequence(SuplearnSequence):
                         .filter_by(language_code=language_code)
             max_length = self.config.model.languages[1].max_length
             if max_length:
-                query = query.filter(entities.Submission.max_length <= max_length)
+                query = query.filter(entities.Submission.tokens_count <= max_length)
             return query.all()
 
 
