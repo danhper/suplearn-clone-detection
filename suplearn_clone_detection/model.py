@@ -68,6 +68,8 @@ def create_encoder(lang_config: LanguageConfig, index: int):
                     return_sequences=False)(x)
 
     output_dimension = lang_config.output_dimensions[-1]
+    if lang_config.bidirectional_encoding:
+        output_dimension *= 2
 
     for i, dim in enumerate(lang_config.hash_dims):
         is_last = i == len(lang_config.hash_dims) - 1
