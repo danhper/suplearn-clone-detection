@@ -165,7 +165,7 @@ class TrainingSequence(SuplearnSequence):
 
             if not negative_ast:
                 logging.warning("could not find a valid negative sample")
-                negative_ast = candidates[base_index]
+                negative_ast = candidate_asts[base_index]
 
             negative_asts.append(negative_ast)
         return negative_asts
