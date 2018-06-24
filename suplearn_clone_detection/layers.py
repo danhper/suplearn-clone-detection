@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional
 import copy
 from os import path
 
@@ -319,6 +319,24 @@ class DenseMulti(Layer):
         }
         base_config = super(DenseMulti, self).get_config()
         return dict(list(base_config.items()) + list(config.items()))
+
+
+def make_triplet_loss(anchor_dim: int, positive_dim: Optional[int] = None):
+    if positive_dim is None:
+        positive_dim = anchor_dim
+
+    def triplet_loss(_y_true, y_pred, alpha=0.4):
+        anchor = y_pred[:, :anchor_dim]
+        positive = y_pred[:, anchor_dim:anchor_dim + positive_dim]
+        negative = y_pred[:, anchor_dim+positive_dim:]
+
+        pos_dist = K.sum(K.square(anchor - positive), axis=1)
+        neg_dist = K.sum(K.square(anchor - negative), axis=1)
+        basic_loss = pos_dist - neg_dist + alpha
+        loss = K.maximum(basic_loss, 0.0)
+
+        return loss
+    return triplet_loss
 
 
 custom_objects = {
