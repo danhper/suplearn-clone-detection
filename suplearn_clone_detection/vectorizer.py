@@ -1,6 +1,7 @@
 from typing import List
 
 import keras.backend as K
+from keras.preprocessing.sequence import pad_sequences
 import tensorflow as tf
 import h5py
 from tqdm import tqdm
@@ -29,7 +30,8 @@ class Vectorizer(FileProcessor):
             if input_vector:
                 input_filenames.append(filename)
                 input_vectors.append(input_vector)
-        vectors = sess.run(self.encoders[language](tf.constant(input_vectors)))
+        model_input = tf.constant(pad_sequences(input_vectors))
+        vectors = sess.run(self.encoders[language](model_input))
         return zip(input_filenames, vectors)
 
     def process(self, input_filenames: List[str], output: str):

@@ -1,9 +1,8 @@
-import csv
 from typing import Dict
 from os import path
 import logging
 
-from suplearn_clone_detection import ast_transformer, database, dataset
+from suplearn_clone_detection import database, dataset
 from suplearn_clone_detection.config import Config
 from suplearn_clone_detection.dataset.generator import DatasetGenerator
 from suplearn_clone_detection.evaluator import Evaluator
