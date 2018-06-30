@@ -106,6 +106,11 @@ def create_parser():
         default=False, action="store_true")
 
 
+    evaluate_predictions_parser = subparsers.add_parser("evaluate-predictions",
+                                                        help="Evaluate predictions")
+    evaluate_predictions_parser.add_argument("predictions", help="file containing predictions")
+    evaluate_predictions_parser.add_argument("-o", "--output", help="output file")
+
     predict_parser = subparsers.add_parser("predict", help="Predict files")
     make_file_processor_parser(predict_parser)
     predict_parser.add_argument(
@@ -146,6 +151,8 @@ def run_command(args):
         commands.train(args.config, args.quiet)
     elif args.command == "evaluate":
         commands.evaluate(vars(args))
+    elif args.command == "evaluate-predictions":
+        commands.evaluate_predictions(vars(args))
     elif args.command == "predict":
         commands.predict(vars(args))
     elif args.command == "detect-clones":

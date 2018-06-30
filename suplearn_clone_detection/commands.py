@@ -5,10 +5,9 @@ import logging
 import h5py
 from keras.models import load_model
 
-from suplearn_clone_detection import database, dataset, layers
+from suplearn_clone_detection import database, dataset, layers, evaluator
 from suplearn_clone_detection.config import Config
 from suplearn_clone_detection.dataset.generator import DatasetGenerator
-from suplearn_clone_detection.evaluator import Evaluator
 from suplearn_clone_detection.predictor import Predictor
 from suplearn_clone_detection.vectorizer import Vectorizer
 from suplearn_clone_detection.results_printer import ResultsPrinter
@@ -25,9 +24,9 @@ def train(config_path: str, quiet: bool = False):
     trainer.train()
 
     data = dataset.get(trainer.config, "dev")
-    evaluator = Evaluator(trainer.model)
+    ev = evaluator.Evaluator(trainer.model)
     results_file = path.join(trainer.output_dir, "results-dev.yml")
-    results = evaluator.evaluate(data, output=results_file)
+    results = ev.evaluate(data, output=results_file)
     if not quiet:
         evaluator.output_results(results)
     return results
@@ -41,14 +40,17 @@ def evaluate(options: Dict[str, str]):
         val = "results-{0}.yml".format(options["data_type"])
         options["output"] = path.join(options.get("base_dir", ""), val)
 
-    evaluator = Evaluator(options["model"])
+    ev = evaluator.Evaluator(options["model"])
     data = dataset.get(config, options["data_type"])
-    results = evaluator.evaluate(data,
-                                 output=options["output"],
-                                 overwrite=options.get("overwrite", False))
+    overwrite = options.get("overwrite", False)
+    results = ev.evaluate(data, output=options["output"], overwrite=overwrite)
     if not options.get("quiet", False):
         evaluator.output_results(results)
     return results
+
+
+def evaluate_predictions(options: Dict[str, str]):
+    evaluator.evaluate_predictions(options["predictions"], options["output"])
 
 
 def predict(options: Dict[str, str]):
