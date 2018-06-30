@@ -1,6 +1,8 @@
 from os import path
 import functools
 
+import h5py
+
 
 def filename_language(filename, available_languages):
     _basename, ext = path.splitext(filename)
@@ -11,18 +13,14 @@ def filename_language(filename, available_languages):
 
 
 def in_batch(iterable, batch_size):
-    iterator = iter(iterable)
     batch = []
-    while True:
-        try:
-            batch.append(next(iterator))
-            if len(batch) == batch_size:
-                yield batch
-                batch = []
-        except StopIteration:
-            if batch:
-                yield batch
-            return
+    for value in iterable:
+        batch.append(value)
+        if len(batch) == batch_size:
+            yield batch
+            batch = []
+    if batch:
+        yield batch
 
 
 def group_by(iterable, key):
@@ -60,3 +58,18 @@ def memoize(make_key):
         f = make_key
         make_key = lambda *args, **kwargs: (tuple(args), (tuple(kwargs.items())))
         return wrapped(f)
+
+
+def hdf5_keys(dataset: h5py.File):
+    keys = []
+    def visitor(key, value):
+        if isinstance(value, h5py.Dataset):
+            keys.append(key)
+    dataset.visititems(visitor)
+    return keys
+
+def hdf5_key_pairs(dataset: h5py.File):
+    keys = hdf5_keys(dataset)
+    for i, left in enumerate(keys):
+        for right in keys[i + 1:]:
+            yield (left, right)

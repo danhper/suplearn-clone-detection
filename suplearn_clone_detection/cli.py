@@ -81,6 +81,11 @@ def create_parser():
     generate_dataset_parser.add_argument(
         "-c", "--config", help="config file path", default="config.yml")
 
+    detect_clones_parser = subparsers.add_parser(
+            "detect-clones", help="Detect clones in the given dataset")
+    detect_clones_parser.add_argument("dataset", help="h5py dataset")
+    detect_clones_parser.add_argument("-m", "--model", required=True, help="path to the model to compute distance")
+    detect_clones_parser.add_argument("-o", "--output", required=True, help="output path")
 
     evaluate_parser = subparsers.add_parser("evaluate", help="Evaluate the model")
     evaluate_parser.add_argument(
@@ -143,6 +148,8 @@ def run_command(args):
         commands.evaluate(vars(args))
     elif args.command == "predict":
         commands.predict(vars(args))
+    elif args.command == "detect-clones":
+        commands.detect_clones(vars(args))
     elif args.command == "generate-dataset":
         commands.generate_dataset(args.config)
     elif args.command == "show-results":

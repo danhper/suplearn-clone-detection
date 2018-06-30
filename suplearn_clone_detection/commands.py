@@ -2,7 +2,10 @@ from typing import Dict
 from os import path
 import logging
 
-from suplearn_clone_detection import database, dataset
+import h5py
+from keras.models import load_model
+
+from suplearn_clone_detection import database, dataset, layers
 from suplearn_clone_detection.config import Config
 from suplearn_clone_detection.dataset.generator import DatasetGenerator
 from suplearn_clone_detection.evaluator import Evaluator
@@ -10,6 +13,7 @@ from suplearn_clone_detection.predictor import Predictor
 from suplearn_clone_detection.vectorizer import Vectorizer
 from suplearn_clone_detection.results_printer import ResultsPrinter
 from suplearn_clone_detection.trainer import Trainer
+from suplearn_clone_detection.detector import Detector
 
 
 def train(config_path: str, quiet: bool = False):
@@ -91,6 +95,15 @@ def process_options(options: Dict[str, str]):
             raise ValueError("cannot open {0}".format(options[key]))
 
     return options
+
+
+def detect_clones(options: dict):
+    model = load_model(options["model"], custom_objects=layers.custom_objects)
+    with h5py.File(options["dataset"]) as data:
+        detector = Detector(model, data)
+        predictions = detector.detect_clones()
+        with open(options["output"], "w") as f:
+            detector.output_prediction_results(predictions, f)
 
 
 def show_results(filepath: str, metric: str, output: str):
