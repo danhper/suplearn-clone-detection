@@ -2,7 +2,8 @@ from typing import Tuple, Optional
 import numpy as np
 
 from keras import optimizers
-from keras.models import Model, Input, Layer
+from keras.models import Model, Input
+from keras.engine.topology import Layer
 from keras.layers import LSTM, Bidirectional, Embedding, concatenate, Dense, multiply
 
 

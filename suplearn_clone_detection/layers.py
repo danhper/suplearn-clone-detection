@@ -251,7 +251,7 @@ class DenseMulti(Layer):
         self.kernel_constraint = constraints.get(kernel_constraint)
         self.bias_constraint = constraints.get(bias_constraint)
         self.input_spec = []
-        self.supports_masking = True
+        self.supports_masking = False
         self.bias = None
 
     def build(self, input_shape):

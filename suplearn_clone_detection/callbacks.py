@@ -1,6 +1,6 @@
 from keras.callbacks import Callback
 
-from suplearn_clone_detection.evaluator import Evaluator
+from suplearn_clone_detection import evaluator
 
 
 class ModelResultsTracker:
@@ -11,7 +11,7 @@ class ModelResultsTracker:
         self.best_epoch = -1
         self.best_results = None
         self.comparator = comparator
-        self.evaluator = Evaluator(self.model)
+        self.evaluator = evaluator.Evaluator(self.model)
         if self.comparator is None:
             self.comparator = self.default_comparator
 
@@ -48,7 +48,7 @@ class ModelEvaluator(Callback):
         results = self.results_tracker.compute_results(epoch)
         if not self.quiet:
             print("\nDev set results")
-            Evaluator.output_results(results)
+            evaluator.output_results(results)
 
         if not self.filepath:
             return
@@ -56,7 +56,7 @@ class ModelEvaluator(Callback):
         if not self.save_best_only or self.results_tracker.is_best_epoch(epoch):
             filepath = self.filepath.format(epoch=epoch)
             with open(filepath, "w") as f:
-                Evaluator.output_results(results, file=f)
+                evaluator.output_results(results, file=f)
 
 
 class ModelCheckpoint(Callback):
