@@ -59,7 +59,10 @@ class DatasetGenerator:
         lang2_grouped_dataset = util.group_submissions(lang2_dataset)
         lang2_sorted_dataset = util.sort_dataset(lang2_dataset)
         for i, submission in enumerate(lang1_dataset):
-            positive_submissions = lang2_grouped_dataset.get(submission.group_key).copy()
+            positive_submissions = lang2_grouped_dataset.get(submission.group_key)
+            if not positive_submissions:
+                continue
+            positive_submissions = positive_submissions.copy()
             for _ in range(self.config.generator.samples_per_submission):
                 sample, positive_idx = self._create_sample(dataset_name, submission,
                                                            lang2_sorted_dataset,
