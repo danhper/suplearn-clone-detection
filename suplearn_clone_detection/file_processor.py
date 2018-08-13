@@ -20,7 +20,6 @@ class FileProcessor:
         self.config = config
         self.loader = self._make_ast_loader(config, options)
         self._files_cache = {}
-        self.loader = self._make_ast_loader(config, options)
         self.language_names = [lang.name for lang in self.config.model.languages]
         transformers = ast_transformer.create_all(self.config.model.languages)
         self.transformers = {t.language: t for t in transformers}

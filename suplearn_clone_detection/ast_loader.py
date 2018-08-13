@@ -1,4 +1,5 @@
 import random
+import logging
 import gzip
 import json
 from os import path
@@ -10,6 +11,11 @@ def tautology(*_args, **_kwargs):
 
 class ASTLoader:
     def __init__(self, asts_path, filenames_path=None, file_format="multi_file"):
+        if filenames_path is None:
+            filenames_path = path.splitext(asts_path)[0] + ".txt"
+        if file_format == "multi_file" and not path.exists(filenames_path):
+            logging.warning("%s does not exist, falling back to single file format", filenames_path)
+            file_format = "single_file"
         if file_format == "multi_file":
             if filenames_path is None:
                 filenames_path = path.splitext(asts_path)[0] + ".txt"
