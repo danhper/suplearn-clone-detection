@@ -68,8 +68,12 @@ def hdf5_keys(dataset: h5py.File):
     dataset.visititems(visitor)
     return keys
 
-def hdf5_key_pairs(dataset: h5py.File):
+def hdf5_key_pairs(dataset: h5py.File, lang_left: str, lang_right: str):
     keys = hdf5_keys(dataset)
+    def has_correct_ext(filename, expected):
+        ext = path.splitext(filename)[1][1:]
+        return expected.startswith(ext)
     for i, left in enumerate(keys):
         for right in keys[i + 1:]:
-            yield (left, right)
+            if has_correct_ext(left, lang_left) and has_correct_ext(right, lang_right):
+                yield (left, right)

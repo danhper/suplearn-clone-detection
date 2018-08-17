@@ -11,6 +11,11 @@ class Detector:
     def __init__(self, model: Model, dataset: h5py.Dataset):
         self.model = model
         self.dataset = dataset
+        self.left_lang = self._get_lang(self.model.layers[0])
+        self.right_lang = self._get_lang(self.model.layers[1])
+
+    def _get_lang(self, layer):
+        return layer.name.split("_")[1]
 
     # TODO: parallelize calls to model.predict
     def detect_clones(self, batch_size=1024):
@@ -30,7 +35,8 @@ class Detector:
         return np.array(left), np.array(right)
 
     def batch_iterator(self, batch_size):
-        yield from util.in_batch(util.hdf5_key_pairs(self.dataset), batch_size)
+        pairs = util.hdf5_key_pairs(self.dataset, self.left_lang, self.right_lang)
+        yield from util.in_batch(pairs, batch_size)
 
     def batches_count(self, batch_size):
         keys_count = len(util.hdf5_keys(self.dataset))
