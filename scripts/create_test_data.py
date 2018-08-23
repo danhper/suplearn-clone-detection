@@ -8,9 +8,9 @@ import argparse
 parser = argparse.ArgumentParser(prog="create-test-data")
 parser.add_argument("-o", "--output", default="to_check_cross_lang.txt")
 parser.add_argument("--max-tokens", type=int, default=250)
-parser.add_argument("-n", "--projects-count", default=50)
-parser.add_argument("--min-files", default=4)
-parser.add_argument("--max-files", default=20)
+parser.add_argument("-n", "--projects-count", default=50, type=int)
+parser.add_argument("--min-files", default=4, type=int)
+parser.add_argument("--max-files", default=20, type=int)
 args = parser.parse_args()
 
 
