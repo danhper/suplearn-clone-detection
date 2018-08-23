@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 from os import path
 import json
 import random
@@ -28,12 +30,12 @@ for file in short_files:
     grouped.setdefault(path.dirname(file), [])
     grouped[path.dirname(file)].append(file)
 
-to_check = []
+to_check = set()
 for key in random.sample(list(grouped), args.projects_count):
     group = grouped[key]
     sample_count = min(random.randint(args.min_files, args.max_files), len(group))
     for file in random.sample(group, sample_count):
-        to_check.append(file)
+        to_check.add(file)
 
 with open(args.output, "w") as f:
     for name in to_check:
