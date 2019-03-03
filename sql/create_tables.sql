@@ -45,6 +45,3 @@ CREATE INDEX IF NOT EXISTS anchor_idx ON samples (anchor_id);
 CREATE INDEX IF NOT EXISTS positive_idx ON samples (positive_id);
 CREATE INDEX IF NOT EXISTS negative_idx ON samples (negative_id);
 CREATE INDEX IF NOT EXISTS config_checksum_idx ON samples (config_checksum);
-
-
--- SELECT * FROM submissions WHERE tokens_count BETWEEN 448 AND 672 AND submissions.language_code = "java" AND (problem_id != 2 OR submissions.contest_id != 35 OR submissions.contest_type != "b");
