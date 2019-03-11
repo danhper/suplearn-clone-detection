@@ -11,6 +11,7 @@ parser.add_argument("--max-tokens", type=int, default=250)
 parser.add_argument("-n", "--projects-count", default=50, type=int)
 parser.add_argument("--min-files", default=4, type=int)
 parser.add_argument("--max-files", default=20, type=int)
+parser.add_argument("--contest-type", choices=["r", "b"])
 args = parser.parse_args()
 
 
@@ -27,6 +28,8 @@ short_files = [name
 grouped = {}
 
 for file in short_files:
+    if args.contest_type and not file.startswith("src/{0}".format(args.contest_type)):
+        continue
     grouped.setdefault(path.dirname(file), [])
     grouped[path.dirname(file)].append(file)
 
