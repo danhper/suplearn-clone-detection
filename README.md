@@ -9,15 +9,25 @@ pip install -r requirements.txt
 python setup.py develop
 ```
 
+Note that Tensorflow needs to be installed separately using [these steps][tensorflow-install]
+
 ## Configuration
 
-See [config.yml.example](./config.yml.example) for a sample configuration file.
-The file should be copied as `config.yml` to be used automatically.
+First, copy [config.yml.example](./config.yml.example) to `config.yml`
+
+```
+cp config.yml.example config.yml
+```
+
+Then, modify the content of `config.yml`. The configuration file is
+self-documented and the most important parameters we used can be found in the paper.
 
 ## Dataset
 
 We train our model using a dataset with data extracted from the competitive programming website AtCoder: https://atcoder.jp.
-The dataset can be downloaded as an SQLite3 database : [cross-language-clones.db][cross-language-clones-db].
+The dataset can be downloaded as an SQLite3 database : [java-python-clones.db.gz][cross-language-clones-db].
+You will most likely need to decompress the database before using it.
+We also provide the raw data as a tarball : [java-python-clones.tar.gz][cross-language-clones-tar]
 The database contains both the text representation and the AST representation
 of the source code. All the data is in the `submissions` table. We describe
 the different rows of the table below.
@@ -82,5 +92,7 @@ Please check the [bigcode-tools][bigcode-tools] repository for the instructions
 on how to train embeddings.
 
 
-[cross-language-clones-db]: https://example.com/download
+[tensorflow-install]: https://www.tensorflow.org/install
+[cross-language-clones-db]: https://static.perez.sh/uploads/2019/cross-language-clone-detection/java-python-clones.db.gz
+[cross-language-clones-tar]: https://static.perez.sh/uploads/2019/cross-language-clone-detection/java-python-clones.tar.gz
 [bigcode-tools]: https://github.com/danhper/bigcode-tools

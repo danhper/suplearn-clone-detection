@@ -63,7 +63,7 @@ class DatasetGenerator:
             if not positive_submissions:
                 continue
             positive_submissions = positive_submissions.copy()
-            for _ in range(self.config.generator.samples_per_submission):
+            for _ in range(self.config.generator.samples_per_problem):
                 sample, positive_idx = self._create_sample(dataset_name, submission,
                                                            lang2_sorted_dataset,
                                                            positive_submissions)

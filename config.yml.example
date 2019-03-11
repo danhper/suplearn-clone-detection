@@ -1,45 +1,102 @@
 references:
+  # defaults settings per language
   language_defaults: &language_defaults
-    embeddings_dimension: 100
-    output_dimensions: [100, 50]
-    transformer_class_name: DFSTransformer
+    # offset when indexing the vocabulary
+    # 1 offset is to ignore the padding index
     vocabulary_offset: 1
+
+    # class to use to linearize the AST
+    # DFSTransformer seems to perform better. BFSTransformer
+    transformer_class_name: DFSTransformer
+
+    # size of the token/node embeddings
+    embeddings_dimension: 100
+
+    # output dimensions of each stacked LSTM
+    output_dimensions: [100, 50]
+
+    # whether to use bidirectional LSTM or not
     bidirectional_encoding: true
+
+    # the output dimension of the hash layer(s)
+    hash_dims: [20]
+
 
 model:
   languages:
+    # name of the language
     - name: java
+      # load the defaults set above
+      # settings can be overriden below if necessary
       <<: *language_defaults
+
+      # path to the vocabulary for the language
       vocabulary: $HOME/workspaces/research/results/java/data/no-id.tsv
-      input_length: 200
+
+      # path to the pre-trained embeddings for the vocabulary
+      embeddings: $HOME/workspaces/research/results/python/embeddings/noid-ch1-anc2-nosib-50d-lr001.npy
+      # maximum length (in AST nodes number) of an input
+      max_length: 500
     - name: python
       <<: *language_defaults
       vocabulary: $HOME/workspaces/research/results/python/vocabulary/no-id.tsv
-      embeddings: $HOME/workspaces/research/results/python/embeddings/noid-ch1-anc2-nosib-50d-lr001.npy
-      embeddings_dimension: 50
-      input_length: 150
+      # if not embeddings file is passed, embeddings are randomly initialized
+      # embeddings: $HOME/workspaces/research/results/python/embeddings/noid-ch1-anc2-nosib-50d-lr001.npy
+      max_length: 400
 
-  dense_layers: [64, 64]
-  # merge_mode: bidistance
-  # merge_output_dim: 64
+  # type of loss to use
+  # this parameter is passed directly to keras
+  loss: binary_crossentropy
+
+  # how to merge the output of the two LSTMs
+  # see paper for details
+  merge_mode: bidistance
+
+  # dimensions of the output of the merged LSTM outputs
+  merge_output_dim: 64
+
+  # number and dimensions of dense layers after the LSTM
+  dense_layers: [64, 32]
+
+  # optimizer parameters
   optimizer:
+    # this is passed to keras directly
     type: rmsprop
 
 generator:
+  # The three following are only needed to generate the SQLite3 DB
+  # pass to the submissions metadata
   submissions_path: $HOME/workspaces/research/dataset/atcoder/submissions.json
+  # file format of the AST
   file_format: multi_file
+  # path to the files containing the ASTS
   asts_path: $HOME/workspaces/research/dataset/atcoder/asts/asts.json
+
+  # path to the SQLite3 DB containing the data
   db_path: sqlite:///$HOME/workspaces/research/dataset/atcoder/atcoder.db
-  use_all_combinations: false
+
+  # the split ratio for training/cross-validation/test
   split_ratio: [0.8, 0.1, 0.1]
-  # shuffle: false
-  # shuffle_before_epoch: false
-  # negative_samples: 4
-  # negative_sample_distance: 0.2
-  # sample_weights: {0: 1.0, 1: 3.0}
+
+  # the number of samples to generate for each problem
+  samples_per_problem: 10
+
+  # the maximum distance ratio between the length of the positive
+  # and the negative sample
+  # if too high, the network tends to overfit by learning the length
+  negative_sample_distance: 0.2
+
+  # the weights for positive and negative samples
+  sample_weights: {0: 1.0, 1: 3.0}
 
 trainer:
+  # size of a batch
   batch_size: 128
+  # number of epochs
   epochs: 10
+
+  # base directory to output results
   output_dir: ./tmp
+
+  # whether to output data for tensorboard or not
   tensorboard_logs: True

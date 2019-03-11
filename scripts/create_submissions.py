@@ -17,6 +17,7 @@ class SubmissionCreator:
         if known_languages is None:
             known_languages = KNOWN_LANGUAGES
         self.config = config
+        self.submissions_dir = path.dirname(self.config.generator.submissions_path)
         self.known_languages = known_languages
         self.ast_loader = ASTLoader(
             config.generator.asts_path,
@@ -30,12 +31,18 @@ class SubmissionCreator:
                 return known_lang
         return None
 
+    def get_source(self, submission_obj):
+        filepath = path.join(self.submissions_dir, submission_obj["file"])
+        with open(filepath) as f:
+            return f.read()
+
     def make_submission(self, submission_obj):
         ast = self.ast_loader.get_ast(submission_obj["file"])
         return entities.Submission(
             id=submission_obj["id"],
-            contest_id=submission_obj["contest_id"],
+            url=submission_obj["submission_url"],
             contest_type=submission_obj["contest_type"],
+            contest_id=submission_obj["contest_id"],
             problem_id=submission_obj["problem_id"],
             problem_title=submission_obj["problem_title"],
             filename=path.basename(submission_obj["file"]),
@@ -44,8 +51,8 @@ class SubmissionCreator:
             source_length=submission_obj["source_length"],
             exec_time=submission_obj["exec_time"],
             tokens_count=len(ast),
+            source=self.get_source(submission_obj),
             ast=json.dumps(ast),
-            url=submission_obj["submission_url"],
         )
 
     def load_submissions(self):

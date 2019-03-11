@@ -1,7 +1,8 @@
 CREATE TABLE IF NOT EXISTS submissions (
   id INTEGER PRIMARY KEY,
-  contest_id INTEGER NOT NULL,
+  url VARCHAR(255),
   contest_type VARCHAR(64) NOT NULL,
+  contest_id INTEGER NOT NULL,
   problem_id INTEGER NOT NULL,
   problem_title VARCHAR(255),
   filename VARCHAR(255) NOT NULL,
@@ -10,8 +11,8 @@ CREATE TABLE IF NOT EXISTS submissions (
   source_length INTEGER,
   exec_time INTEGER,
   tokens_count INTEGER,
-  ast TEXT NOT NULL,
-  url VARCHAR(255)
+  source TEXT NOT NULL,
+  ast TEXT NOT NULL
 );
 
 CREATE INDEX IF NOT EXISTS contest_idx ON submissions (contest_id, contest_type);

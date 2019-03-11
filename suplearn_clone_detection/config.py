@@ -60,7 +60,7 @@ class ModelConfig:
         self.use_output_nn = config.get("use_output_nn", True)
         if not self.merge_mode in self.KNOWN_MERGE_MODES:
             raise ValueError("unknown merge mode: {0}".format(self.merge_mode))
-        default_loss = "mse" if self.use_output_nn else "binary_crossentropy"
+        default_loss = "binary_crossentropy" if self.use_output_nn else "mse"
         self.loss = config.get("loss", default_loss)
         self.metrics = config.get("metrics", ["accuracy"])
         self.normalization_value = 100
@@ -81,7 +81,7 @@ class GeneratorConfig:
         self.split_ratio = config.get("split_ratio", [0.8, 0.1, 0.1])
         self.negative_samples = config.get("negative_samples", 1)
         self.negative_sample_candidates = config.get("negative_sample_candidates", 8)
-        self.samples_per_submission = config.get("samples_per_submission", 1)
+        self.samples_per_problem = config.get("samples_per_problem", 1)
         self.class_weights = config.get("class_weights")
         self.negative_sample_distance = config.get("negative_sample_distance", 0.2)
 
@@ -105,7 +105,7 @@ class Config:
         return dict(
             languages=[v.name for v in self.model.languages],
             negative_sample_distance=self.generator.negative_sample_distance,
-            samples_per_submission=self.generator.samples_per_submission,
+            samples_per_problem=self.generator.samples_per_problem,
             split_ratio=self.generator.split_ratio,
         )
 

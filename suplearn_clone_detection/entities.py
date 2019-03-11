@@ -8,8 +8,9 @@ class Submission(Base):
     __tablename__ = "submissions"
 
     id: int = Column(Integer, primary_key=True)
-    contest_id: int = Column(Integer)
+    url: str = Column(String)
     contest_type: str = Column(String)
+    contest_id: int = Column(Integer)
     problem_id: str = Column(String)
     problem_title: str = Column(String)
     filename: str = Column(String)
@@ -18,7 +19,7 @@ class Submission(Base):
     source_length: int = Column(Integer)
     exec_time: int = Column(Integer)
     tokens_count: int = Column(Integer)
-    url: str = Column(String)
+    source: str = Column(String)
     ast: str = Column(String)
 
     @property
