@@ -27,7 +27,7 @@ self-documented and the most important parameters we used can be found in the pa
 We train our model using a dataset with data extracted from the competitive programming website AtCoder: https://atcoder.jp.
 The dataset can be downloaded as an SQLite3 database : [java-python-clones.db.gz][cross-language-clones-db].
 You will most likely need to decompress the database before using it.
-We also provide the raw data as a tarball : [java-python-clones.tar.gz][cross-language-clones-tar]
+We also provide the raw data as a tarball but it should generally not be needed: [java-python-clones.tar.gz][cross-language-clones-tar].
 The database contains both the text representation and the AST representation
 of the source code. All the data is in the `submissions` table. We describe
 the different rows of the table below.
@@ -93,6 +93,6 @@ on how to train embeddings.
 
 
 [tensorflow-install]: https://www.tensorflow.org/install
-[cross-language-clones-db]: https://static.perez.sh/uploads/2019/cross-language-clone-detection/java-python-clones.db.gz
-[cross-language-clones-tar]: https://static.perez.sh/uploads/2019/cross-language-clone-detection/java-python-clones.tar.gz
+[cross-language-clones-db]: https://static.perez.sh/research/2019/cross-language-clone-detection/datasets/java-python-clones.db.gz
+[cross-language-clones-tar]: https://static.perez.sh/research/2019/cross-language-clone-detection/datasets/java-python-clones.tar.gz
 [bigcode-tools]: https://github.com/danhper/bigcode-tools
