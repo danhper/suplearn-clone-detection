@@ -91,6 +91,29 @@ This repository does not provide any functionality to train emebddings.
 Please check the [bigcode-tools][bigcode-tools] repository for the instructions
 on how to train embeddings.
 
+## Citing the project
+
+If you are using this for academic work, we would be thankful if you could cite the following paper.
+
+```
+@inproceedings{Perez:2019:CCD:3341883.3341965,
+ author = {Perez, Daniel and Chiba, Shigeru},
+ title = {Cross-language Clone Detection by Learning over Abstract Syntax Trees},
+ booktitle = {Proceedings of the 16th International Conference on Mining Software Repositories},
+ series = {MSR '19},
+ year = {2019},
+ location = {Montreal, Quebec, Canada},
+ pages = {518--528},
+ numpages = {11},
+ url = {https://doi.org/10.1109/MSR.2019.00078},
+ doi = {10.1109/MSR.2019.00078},
+ acmid = {3341965},
+ publisher = {IEEE Press},
+ address = {Piscataway, NJ, USA},
+ keywords = {clone detection, machine learning, source code representation},
+}
+```
+
 
 [tensorflow-install]: https://www.tensorflow.org/install
 [cross-language-clones-db]: https://static.perez.sh/research/2019/cross-language-clone-detection/datasets/java-python-clones.db.gz
